@@ -24,585 +24,281 @@
 <body>
 <title>סל חדרה</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@400;600;700&display=swap">
 <style>
 :root{
-  --ground:#F6F7F4; --surface:#FFFFFF; --raise:#FDFDFB;
+  --ground:#F6F7F4; --surface:#FFFFFF;
   --ink:#161D19; --ink-2:#3C4740; --muted:#6B7770;
-  --line:#DDE2D9; --line-2:#EDF0EA;
+  --line:#DDE2D9; --line-2:#EDF0EA; --chip:#EFF2EC;
   --accent:#0B5D4A; --accent-soft:#E2EFE9;
-  --cheap:#0F7355; --dear:#9C3B2B; --warn:#8A6A12;
-  --chip:#EFF2EC;
-  --shadow:0 1px 2px rgba(22,29,25,.06), 0 8px 24px -16px rgba(22,29,25,.25);
+  --cheap:#0F7355; --cheap-bg:#E4F2EA;
+  --dear:#9C3B2B;  --dear-bg:#F8EBE7;
+  --shadow:0 1px 2px rgba(22,29,25,.05), 0 10px 28px -20px rgba(22,29,25,.3);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --ground:#121512; --surface:#1A1E1A; --raise:#20251F;
+    --ground:#121512; --surface:#1A1E1A;
     --ink:#E9EEE6; --ink-2:#C2CCBE; --muted:#8E9A8C;
-    --line:#2C322B; --line-2:#242922;
+    --line:#2C322B; --line-2:#242922; --chip:#232821;
     --accent:#56C39C; --accent-soft:#17302A;
-    --cheap:#56C39C; --dear:#E2886F; --warn:#D2AC4A;
-    --chip:#232821;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    --cheap:#56C39C; --cheap-bg:#17302A;
+    --dear:#E2886F;  --dear-bg:#31211C;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
   }
 }
 :root[data-theme="dark"]{
-  --ground:#121512; --surface:#1A1E1A; --raise:#20251F;
+  --ground:#121512; --surface:#1A1E1A;
   --ink:#E9EEE6; --ink-2:#C2CCBE; --muted:#8E9A8C;
-  --line:#2C322B; --line-2:#242922;
+  --line:#2C322B; --line-2:#242922; --chip:#232821;
   --accent:#56C39C; --accent-soft:#17302A;
-  --cheap:#56C39C; --dear:#E2886F; --warn:#D2AC4A;
-  --chip:#232821;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  --cheap:#56C39C; --cheap-bg:#17302A;
+  --dear:#E2886F;  --dear-bg:#31211C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
 }
 
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--ground); color:var(--ink);
   font-family:"Assistant","Segoe UI",system-ui,sans-serif;
-  font-size:15px; line-height:1.5; direction:rtl;
-  -webkit-font-smoothing:antialiased;
+  font-size:15px; line-height:1.5; direction:rtl; -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1040px; margin:0 auto; padding:20px 18px 80px}
+.wrap{max-width:720px; margin:0 auto; padding:20px 16px 60px}
 
-/* ---------- head ---------- */
-.masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px}
+header{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:16px}
 h1{
-  font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:900;
-  font-size:clamp(26px,4.2vw,38px); line-height:1.05; margin:0; letter-spacing:-.01em;
-  text-wrap:balance;
+  font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:900; margin:0;
+  font-size:clamp(25px,5vw,34px); line-height:1.05; letter-spacing:-.01em;
 }
-.sub{color:var(--muted); font-size:13.5px; margin-top:5px}
-.sub b{color:var(--ink-2); font-weight:600}
+.sub{color:var(--muted); font-size:13px; margin-top:4px}
 .themer{
-  border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
-  border-radius:999px; padding:7px 14px; font:inherit; font-size:12.5px; cursor:pointer;
+  border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  border-radius:999px; padding:6px 13px; font:inherit; font-size:12.5px; cursor:pointer; white-space:nowrap;
 }
 .themer:hover{border-color:var(--accent); color:var(--accent)}
 
-/* ---------- basket summary ---------- */
-.ledger{
-  background:var(--surface); border:1px solid var(--line); border-radius:12px;
-  box-shadow:var(--shadow); padding:16px 18px; margin-bottom:16px;
-}
-.ledger-top{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap}
-.ledger h2{
-  font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:700; font-size:18px; margin:0;
-}
-.ledger-empty{color:var(--muted); font-size:13.5px; margin:10px 0 0}
-.totals{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px; margin-top:14px;
-  background:var(--line-2); border:1px solid var(--line-2); border-radius:9px; overflow:hidden}
-.tot{background:var(--surface); padding:11px 13px}
-.tot .lab{font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:600}
-.tot .val{font-size:21px; font-weight:700; font-variant-numeric:tabular-nums; margin-top:3px; line-height:1.15}
-.tot .note{font-size:11.5px; color:var(--muted); margin-top:1px}
-.tot.save .val{color:var(--cheap)}
-.tot.dear .val{color:var(--dear)}
-
-.ranked{margin-top:14px; border-top:1px solid var(--line-2); padding-top:12px}
-.ranked .cap{font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:8px}
-.rank-row{display:grid; grid-template-columns:18px 1fr auto; gap:9px; align-items:center; padding:5px 0; font-size:13.5px}
-.rank-row .pos{color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px}
-.rank-row .bar{height:5px; border-radius:3px; background:var(--chip); position:relative; overflow:hidden; min-width:40px}
-.rank-row .bar i{position:absolute; inset-inline-start:0; top:0; bottom:0; background:var(--accent); opacity:.5; border-radius:3px}
-.rank-row.best .bar i{opacity:1; background:var(--cheap)}
-.rank-name{display:flex; align-items:center; gap:7px; min-width:0}
-.rank-name span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.rank-sum{font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap}
-.rank-row.best .rank-sum{color:var(--cheap)}
-.miss{font-size:11px; color:var(--warn); white-space:nowrap}
-
-.basket-acts{display:flex; gap:8px; margin-top:13px; flex-wrap:wrap}
-.btn{
-  border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
-  border-radius:8px; padding:8px 14px; font:inherit; font-size:13px; font-weight:600; cursor:pointer;
-}
-.btn:hover{border-color:var(--accent); color:var(--accent)}
-.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
-.btn.primary:hover{opacity:.9; color:#fff}
-.btn:focus-visible,.themer:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-
-/* ---------- search ---------- */
+/* search */
 .searchbar{position:relative; margin-bottom:10px}
 #q{
   width:100%; border:1px solid var(--line); background:var(--surface); color:var(--ink);
-  border-radius:10px; padding:13px 44px 13px 14px; font:inherit; font-size:16px;
+  border-radius:11px; padding:14px 46px 14px 14px; font:inherit; font-size:17px; box-shadow:var(--shadow);
 }
-#q::placeholder{color:var(--muted)}
+#q::placeholder{color:var(--muted); font-size:15px}
 .searchbar::before{
-  content:"⌕"; position:absolute; inset-inline-end:14px; top:50%; transform:translateY(-52%);
-  color:var(--muted); font-size:20px; pointer-events:none;
+  content:"⌕"; position:absolute; inset-inline-end:15px; top:50%; transform:translateY(-54%);
+  color:var(--muted); font-size:21px; pointer-events:none;
 }
-.quick{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
+.quick{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px}
 .quick button{
   border:1px solid var(--line); background:var(--chip); color:var(--ink-2);
-  border-radius:999px; padding:5px 12px; font:inherit; font-size:12.5px; cursor:pointer;
+  border-radius:999px; padding:6px 13px; font:inherit; font-size:13px; cursor:pointer;
 }
 .quick button:hover{border-color:var(--accent); color:var(--accent)}
-.count{font-size:12.5px; color:var(--muted); margin-bottom:9px}
+.count{font-size:13px; color:var(--muted); margin-bottom:12px}
 
-/* ---------- results ---------- */
-.rows{display:flex; flex-direction:column; gap:7px}
-.row{
-  background:var(--surface); border:1px solid var(--line); border-radius:10px;
-  padding:11px 13px; display:grid; grid-template-columns:1fr 150px 34px; gap:12px; align-items:center;
+/* one product = one card holding every branch, cheapest first */
+.cards{display:flex; flex-direction:column; gap:16px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); overflow:hidden}
+.card > h2{
+  font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:700; font-size:18px;
+  margin:0; padding:14px 16px 11px; line-height:1.3; text-wrap:balance;
 }
-.row.inbasket{border-color:var(--accent); background:var(--accent-soft)}
-.nm{font-weight:600; font-size:14.5px; line-height:1.3}
-.meta{font-size:11.5px; color:var(--muted); margin-top:2px; font-variant-numeric:tabular-nums}
-.meta .bc{letter-spacing:.02em}
+.card .sumline{
+  padding:0 16px 12px; margin-top:-4px; font-size:13px; color:var(--muted);
+  display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline;
+}
+.card .sumline b{color:var(--cheap); font-weight:700; font-variant-numeric:tabular-nums}
 
-/* price spread: RTL so cheap sits right */
-.spread{display:flex; flex-direction:column; gap:4px}
-.spread-nums{display:flex; justify-content:space-between; font-variant-numeric:tabular-nums; font-size:13px; font-weight:700}
-.spread-nums .c{color:var(--cheap)}
-.spread-nums .d{color:var(--dear)}
-.track{position:relative; height:16px}
-.track .line{position:absolute; top:7px; height:2px; inset-inline:0; background:var(--line)}
-.track i{
-  position:absolute; top:4px; width:8px; height:8px; border-radius:50%;
-  background:var(--muted); opacity:.45; transform:translateX(50%);
-}
-.track i.c{background:var(--cheap); opacity:1; width:10px; height:10px; top:3px}
-.track i.d{background:var(--dear); opacity:1; width:10px; height:10px; top:3px}
-.where{font-size:11.5px; color:var(--muted); text-align:center}
-.where b{color:var(--cheap); font-weight:700}
+table{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums}
+tbody tr{border-top:1px solid var(--line-2)}
+tbody tr.best{background:var(--cheap-bg)}
+tbody tr.worst{background:var(--dear-bg)}
+td{padding:9px 16px; vertical-align:middle}
+td.rank{width:30px; color:var(--muted); font-size:12.5px; padding-inline-end:0}
+td.store{font-size:14.5px; color:var(--ink-2)}
+tr.best td.store{font-weight:700; color:var(--ink)}
+td.price{text-align:end; white-space:nowrap; font-weight:700; font-size:16px; width:92px}
+tr.best  td.price{color:var(--cheap)}
+tr.worst td.price{color:var(--dear)}
+td.extra{text-align:end; white-space:nowrap; font-size:12.5px; color:var(--muted); width:78px; padding-inline-start:0}
+tr.best td.extra{color:var(--cheap); font-weight:700}
 
-.add{
-  width:34px; height:34px; border-radius:8px; border:1px solid var(--line);
-  background:var(--raise); color:var(--ink-2); font-size:19px; line-height:1; cursor:pointer;
-  display:grid; place-items:center;
+.tagline{
+  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.04em;
+  padding:1px 7px; border-radius:999px; margin-inline-start:7px; vertical-align:1px;
 }
-.add:hover{border-color:var(--accent); color:var(--accent)}
-.row.inbasket .add{background:var(--accent); border-color:var(--accent); color:#fff}
+tr.best  .tagline{background:var(--cheap); color:#fff}
+tr.worst .tagline{background:var(--dear);  color:#fff}
 
-.detail{grid-column:1/-1; border-top:1px dashed var(--line); margin-top:9px; padding-top:9px;
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(188px,1fr)); gap:3px 14px}
-.detail div{display:flex; justify-content:space-between; gap:8px; font-size:12.5px; padding:2px 0}
-.detail .s{color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.detail .p{font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap}
-.detail .p.c{color:var(--cheap)}
-.detail .p.d{color:var(--dear)}
-.detail .p.na{color:var(--muted); font-weight:400}
-
-.empty{text-align:center; color:var(--muted); padding:48px 20px; font-size:14px}
-.foot{margin-top:28px; padding-top:14px; border-top:1px solid var(--line-2);
-  font-size:12px; color:var(--muted); line-height:1.6}
-.toast{
-  position:fixed; inset-inline:0; bottom:18px; margin:auto; width:max-content; max-width:88vw;
-  background:var(--ink); color:var(--ground); padding:10px 18px; border-radius:999px;
-  font-size:13.5px; font-weight:600; opacity:0; transition:opacity .22s; pointer-events:none; z-index:9;
+.more{
+  width:100%; border:0; border-top:1px solid var(--line-2); background:none;
+  color:var(--accent); font:inherit; font-size:13px; font-weight:600;
+  padding:10px; cursor:pointer;
 }
-.toast.on{opacity:1}
-
-/* ---------- tabs ---------- */
-.tabs{display:flex; gap:2px; margin-bottom:14px; border-bottom:1px solid var(--line)}
-.tabs button{
-  border:0; background:none; color:var(--muted); font:inherit; font-size:14px; font-weight:600;
-  padding:9px 15px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
-  display:flex; align-items:center; gap:7px;
-}
-.tabs button:hover{color:var(--ink-2)}
-.tabs button[aria-selected="true"]{color:var(--accent); border-bottom-color:var(--accent)}
-.tabs .badge{
-  background:var(--chip); color:var(--ink-2); border-radius:999px;
-  padding:1px 7px; font-size:11.5px; font-variant-numeric:tabular-nums;
-}
-.tabs button[aria-selected="true"] .badge{background:var(--accent-soft); color:var(--accent)}
-
-/* ---------- price movement rows ---------- */
-.mv{
-  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 13px;
-  display:grid; grid-template-columns:34px 1fr auto; gap:12px; align-items:center;
-}
-.mv .arrow{
-  width:34px; height:34px; border-radius:8px; display:grid; place-items:center;
-  font-size:16px; font-weight:700; line-height:1;
-}
-.mv.down .arrow{background:var(--accent-soft); color:var(--cheap)}
-.mv.up   .arrow{background:var(--chip); color:var(--dear)}
-.mv .at{font-size:11.5px; color:var(--muted); margin-top:2px}
-.mv .nums{text-align:start; font-variant-numeric:tabular-nums; white-space:nowrap}
-.mv .was{color:var(--muted); text-decoration:line-through; font-size:12.5px}
-.mv .now{font-size:17px; font-weight:700; margin-inline-start:7px}
-.mv.down .now{color:var(--cheap)}
-.mv.up   .now{color:var(--dear)}
-.mv .pct{font-size:12px; font-weight:700; margin-top:1px}
-.mv.down .pct{color:var(--cheap)}
-.mv.up   .pct{color:var(--dear)}
-.seg{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap}
-.seg button{
-  border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
-  border-radius:999px; padding:5px 13px; font:inherit; font-size:12.5px; cursor:pointer;
-}
-.seg button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
-
-.year-note{
-  margin-top:11px; padding:10px 13px; border-radius:9px;
-  background:var(--accent-soft); border:1px solid transparent;
-  font-size:13.5px; color:var(--ink-2); line-height:1.45;
-}
-.year-note b{color:var(--accent); font-variant-numeric:tabular-nums; font-size:15px}
-
-@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
-@media (max-width:620px){
-  .row{grid-template-columns:1fr 34px; gap:9px}
-  .spread{grid-column:1/-1; order:3}
+.more:hover{background:var(--chip)}
+.empty{text-align:center; color:var(--muted); padding:50px 20px; font-size:14px; line-height:1.7}
+.foot{margin-top:30px; padding-top:14px; border-top:1px solid var(--line-2); font-size:12px; color:var(--muted); line-height:1.65}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:460px){
+  td{padding:9px 12px}
+  td.extra{display:none}
+  .card > h2{font-size:17px; padding:13px 12px 10px}
+  .card .sumline{padding:0 12px 11px}
 }
 </style>
 
 <div class="wrap">
-  <div class="masthead">
+  <header>
     <div>
       <h1>סל חדרה</h1>
-      <div class="sub">
-        <b id="nStores">0</b> סניפים · <b id="nItems">0</b> מוצרים להשוואה · עודכן <b id="gen">—</b>
-      </div>
+      <div class="sub">מחירי <b id="nStores">0</b> סניפים · עודכן <b id="gen">—</b></div>
     </div>
     <button class="themer" id="themer" type="button">מצב תצוגה</button>
+  </header>
+
+  <div class="searchbar">
+    <input id="q" type="search" placeholder="מה אתם מחפשים? קוטג׳, עוף, קולה…" autocomplete="off" enterkeyhint="search">
   </div>
-
-  <section class="ledger" aria-label="סיכום הסל">
-    <div class="ledger-top">
-      <h2>הסל שלי</h2>
-      <span class="sub" id="basketCount">ריק</span>
-    </div>
-    <p class="ledger-empty" id="emptyNote">
-      חפשו מוצר למטה ולחצו <strong>+</strong> כדי להוסיף אותו לסל.
-      ברגע שיש בסל פריטים, יופיע כאן דירוג הסניפים לפי העלות הכוללת.
-    </p>
-    <div id="summary" hidden>
-      <div class="totals">
-        <div class="tot"><div class="lab">פריטים</div><div class="val" id="tItems">0</div></div>
-        <div class="tot save"><div class="lab">הסניף הזול</div><div class="val" id="tBest">—</div><div class="note" id="tBestName">—</div></div>
-        <div class="tot dear"><div class="lab">הסניף היקר</div><div class="val" id="tWorst">—</div><div class="note" id="tWorstName">—</div></div>
-        <div class="tot save"><div class="lab">חיסכון בקנייה</div><div class="val" id="tSave">—</div><div class="note">אם קונים הכל בזול</div></div>
-      </div>
-      <div class="year-note" id="yearNote"></div>
-      <div class="ranked">
-        <div class="cap">עלות הסל לפי סניף</div>
-        <div id="rank"></div>
-      </div>
-    </div>
-    <div class="basket-acts">
-      <button class="btn primary" id="copyBtn" type="button">העתק את הסל</button>
-      <button class="btn" id="clearBtn" type="button">נקה סל</button>
-    </div>
-  </section>
-
-  <div class="tabs" role="tablist">
-    <button role="tab" id="tab-find" aria-selected="true" type="button">חיפוש מוצר</button>
-    <button role="tab" id="tab-moves" aria-selected="false" type="button">
-      ירידות מחיר <span class="badge" id="mvBadge">0</span>
-    </button>
-  </div>
-
-  <section id="pane-find">
-    <div class="searchbar">
-      <input id="q" type="search" placeholder="חפשו מוצר: קוטג׳, עגבניה, שמפו, קולה…" autocomplete="off">
-    </div>
-    <div class="quick" id="quick"></div>
-    <div class="count" id="count">טוען נתונים…</div>
-    <div class="rows" id="rows"></div>
-  </section>
-
-  <section id="pane-moves" hidden>
-    <div class="seg" role="group" aria-label="סינון">
-      <button type="button" data-f="down" aria-pressed="true">ירידות</button>
-      <button type="button" data-f="up" aria-pressed="false">עליות</button>
-      <button type="button" data-f="all" aria-pressed="false">הכל</button>
-    </div>
-    <div class="count" id="mvCount"></div>
-    <div class="rows" id="mvRows"></div>
-  </section>
+  <div class="quick" id="quick"></div>
+  <div class="count" id="count">טוען…</div>
+  <div class="cards" id="cards"></div>
 
   <p class="foot">
-    המחירים נמשכים מקבצי שקיפות המחירים שרשתות המזון מחויבות לפרסם בחוק.
-    מוצג רק מה שקיים בלפחות 8 מהסניפים, כדי שההשוואה תהיה אמיתית.
-    מוצרים בשקילה (ירקות, פירות, בשר טרי) מופיעים חלקית בלבד, כי לכל רשת קוד פנימי משלה עבורם.
+    המחירים מגיעים מקבצי שקיפות המחירים שרשתות המזון מחויבות לפרסם בחוק, ומתעדכנים כל שעה.
+    מוצג רק מה שנמכר בלפחות 8 סניפים, כדי שההשוואה תהיה הוגנת.
   </p>
 </div>
-<div class="toast" id="toast"></div>
 
 <script>
-const LS = "salHadera.basket.v1", LSTH = "salHadera.theme.v1";
-let DATA = null, BASKET = load(), openBc = null;
+const LSTH = "salHadera.theme.v1";
+let DATA = null;
+const TOP = 8;          // כמה מוצרים מציגים בבת אחת
+const SHOW = 6;         // כמה סניפים גלויים בכל מוצר לפני "הצג הכל"
+const openAll = new Set();
 
-function load(){ try{ return JSON.parse(localStorage.getItem(LS)) || {}; }catch(e){ return {}; } }
-function save(){ try{ localStorage.setItem(LS, JSON.stringify(BASKET)); }catch(e){} }
-
-/* theme toggle: cycles system -> light -> dark */
 (function(){
-  let t = null;
-  try{ t = localStorage.getItem(LSTH); }catch(e){}
-  if(t) document.documentElement.setAttribute("data-theme", t);
-  document.getElementById("themer").addEventListener("click", () => {
-    const cur = document.documentElement.getAttribute("data-theme");
-    const next = cur === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try{ localStorage.setItem(LSTH, next); }catch(e){}
+  let t=null; try{ t=localStorage.getItem(LSTH);}catch(e){}
+  if(t) document.documentElement.setAttribute("data-theme",t);
+  document.getElementById("themer").addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const next=cur==="dark"?"light":"dark";
+    document.documentElement.setAttribute("data-theme",next);
+    try{localStorage.setItem(LSTH,next);}catch(e){}
   });
 })();
 
-const nis = n => n.toLocaleString("he-IL",{minimumFractionDigits:2, maximumFractionDigits:2}) + " ₪";
-let toastT;
-function toast(msg){
-  const el = document.getElementById("toast");
-  el.textContent = msg; el.classList.add("on");
-  clearTimeout(toastT); toastT = setTimeout(()=>el.classList.remove("on"), 2200);
-}
+const nis = n => n.toLocaleString("he-IL",{minimumFractionDigits:2,maximumFractionDigits:2}) + " ₪";
 
 fetch("data.json").then(r=>r.json()).then(d=>{
-  DATA = d;
-  document.getElementById("nStores").textContent = d.stores.length;
-  document.getElementById("nItems").textContent  = d.items.length.toLocaleString("he-IL");
-  document.getElementById("gen").textContent     = d.generated;
+  DATA=d;
+  document.getElementById("nStores").textContent=d.stores.length;
+  document.getElementById("gen").textContent=d.generated;
   buildQuick();
   render("");
-  renderBasket();
-  const drops = (d.moves||[]).filter(m=>m.pct<0).length;
-  document.getElementById("mvBadge").textContent = drops;
-  renderMoves();
 }).catch(()=>{
-  document.getElementById("count").textContent = "לא הצלחתי לטעון את קובץ הנתונים.";
+  document.getElementById("count").textContent="לא הצלחתי לטעון את המחירים. נסו לרענן.";
 });
 
-/* ---- tabs ---- */
-const TABS = [["tab-find","pane-find"],["tab-moves","pane-moves"]];
-TABS.forEach(([t,p])=>{
-  document.getElementById(t).addEventListener("click", ()=>{
-    TABS.forEach(([t2,p2])=>{
-      const on = t2===t;
-      document.getElementById(t2).setAttribute("aria-selected", on ? "true":"false");
-      document.getElementById(p2).hidden = !on;
-    });
-  });
-});
-
-/* ---- price movements ---- */
-let mvFilter = "down";
-document.querySelectorAll(".seg button").forEach(b=>{
-  b.addEventListener("click", ()=>{
-    mvFilter = b.dataset.f;
-    document.querySelectorAll(".seg button").forEach(x=>
-      x.setAttribute("aria-pressed", x===b ? "true":"false"));
-    renderMoves();
-  });
-});
-
-function renderMoves(){
-  if(!DATA) return;
-  const all = DATA.moves || [];
-  const list = mvFilter==="all" ? all
-             : all.filter(m => mvFilter==="down" ? m.pct<0 : m.pct>0);
-  const host = document.getElementById("mvRows");
-  const cnt  = document.getElementById("mvCount");
-  host.innerHTML = "";
-
-  if(!all.length){
-    cnt.textContent = "";
-    host.innerHTML = '<div class="empty">עוד לא נרשמו שינויי מחיר.<br>הסורק אוסף היסטוריה בכל סריקה, והרשימה תתמלא מעצמה.</div>';
-    return;
-  }
-  if(!list.length){
-    cnt.textContent = "";
-    host.innerHTML = '<div class="empty">אין שינויים בקטגוריה הזו כרגע.</div>';
-    return;
-  }
-  cnt.textContent = `${list.length} שינויי מחיר שעדיין בתוקף. המחיר החדש הוא מה שתשלמו בקופה היום.`;
-
-  const frag = document.createDocumentFragment();
-  list.forEach(m=>{
-    const down = m.pct < 0;
-    const el = document.createElement("div");
-    el.className = "mv " + (down ? "down" : "up");
-    el.innerHTML = `
-      <div class="arrow">${down ? "↓" : "↑"}</div>
-      <div class="who">
-        <div class="nm"></div>
-        <div class="at"><span class="store"></span> · השתנה ב-${m.t}</div>
-      </div>
-      <div class="nums">
-        <div><span class="was">${nis(m.o)}</span><span class="now">${nis(m.p)}</span></div>
-        <div class="pct">${down ? "" : "+"}${m.pct}%</div>
-      </div>`;
-    el.querySelector(".nm").textContent = m.n;
-    el.querySelector(".store").textContent = DATA.stores[m.s].n;
-    frag.appendChild(el);
-  });
-  host.appendChild(frag);
-}
-
-const QUICK = ["קוטג","חלב","יוגורט","גבינה","עוף","שניצל","עגבניה","מלפפון","בננה","קולה","מים","שמן","אורז","קפה","נייר טואלט","שמפו","כביסה","סבון כלים"];
+const QUICK=["קוטג","חלב","גבינה","יוגורט","עוף","שניצל","קולה","מים","שמן","אורז","קפה","נייר טואלט","שמפו","כביסה"];
 function buildQuick(){
-  const host = document.getElementById("quick");
+  const host=document.getElementById("quick");
   QUICK.forEach(w=>{
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = w;
-    b.addEventListener("click", ()=>{ document.getElementById("q").value = w; render(w); });
+    const b=document.createElement("button"); b.type="button"; b.textContent=w;
+    b.addEventListener("click",()=>{
+      const q=document.getElementById("q"); q.value=w; render(w); q.blur();
+      scrollTo({top:0,behavior:"smooth"});
+    });
     host.appendChild(b);
   });
 }
-
-document.getElementById("q").addEventListener("input", e => render(e.target.value));
+document.getElementById("q").addEventListener("input",e=>{ openAll.clear(); render(e.target.value); });
 
 function render(term){
   if(!DATA) return;
-  const t = (term||"").trim();
-  const rows = document.getElementById("rows");
-  const countEl = document.getElementById("count");
+  const t=(term||"").trim();
+  const cards=document.getElementById("cards");
+  const countEl=document.getElementById("count");
   let list;
   if(!t){
-    list = DATA.items.slice(0, 40);
-    countEl.textContent = "40 המוצרים עם פער המחירים הגדול ביותר בחדרה. חפשו כדי למצוא את שלכם.";
+    list=DATA.items.slice(0,TOP);
+    countEl.textContent="המוצרים שבהם הפער בין הסניפים הוא הגדול ביותר. חפשו למעלה כדי לראות מוצר מסוים.";
   }else{
-    list = DATA.items.filter(it => it.n.includes(t)).slice(0, 120);
-    countEl.textContent = list.length
-      ? `${list.length}${list.length===120?"+":""} תוצאות עבור "${t}" · ממוינות לפי פער המחיר`
-      : `אין תוצאות עבור "${t}".`;
+    list=DATA.items.filter(it=>it.n.includes(t)).slice(0,TOP);
+    const all=DATA.items.filter(it=>it.n.includes(t)).length;
+    countEl.textContent = all
+      ? `נמצאו ${all} מוצרים עבור "${t}"${all>TOP?`, מוצגים ${TOP} הראשונים`:""}`
+      : `לא נמצא מוצר בשם "${t}"`;
   }
-  rows.innerHTML = "";
+  cards.innerHTML="";
   if(!list.length){
-    rows.innerHTML = '<div class="empty">לא נמצא מוצר בשם הזה.<br>נסו מילה אחת בלבד, למשל "קוטג" במקום "קוטג 5 אחוז".</div>';
+    cards.innerHTML='<div class="empty">לא נמצא מוצר בשם הזה.<br>נסו מילה אחת בלבד, למשל <b>קוטג</b> במקום <b>קוטג\' 5 אחוז</b>.</div>';
     return;
   }
-  const frag = document.createDocumentFragment();
-  list.forEach(it => frag.appendChild(rowFor(it)));
-  rows.appendChild(frag);
+  const frag=document.createDocumentFragment();
+  list.forEach(it=>frag.appendChild(cardFor(it)));
+  cards.appendChild(frag);
 }
 
-function rowFor(it){
-  const el = document.createElement("div");
-  el.className = "row" + (BASKET[it.b] ? " inbasket" : "");
-  const vals = it.p.map((v,i)=>({v,i})).filter(x=>x.v!=null);
-  const lo = it.lo, hi = it.hi, span = (hi-lo) || 1;
-  const cheapI = vals.reduce((a,b)=> b.v < a.v ? b : a).i;
-  const dearI  = vals.reduce((a,b)=> b.v > a.v ? b : a).i;
-  const pct = Math.round((hi-lo)/lo*100);
+function cardFor(it){
+  // כל הסניפים שמוכרים את המוצר, מהזול ליקר. זו כל התצוגה.
+  const rows = it.p.map((v,i)=>({price:v, store:DATA.stores[i].n}))
+                   .filter(r=>r.price!=null)
+                   .sort((a,b)=>a.price-b.price);
+  const lo=rows[0].price, hi=rows[rows.length-1].price;
+  const open = openAll.has(it.b);
+  const shown = open ? rows : rows.slice(0, SHOW);
 
-  const dots = vals.map(x=>{
-    const pos = ((x.v - lo) / span) * 100;
-    const cls = x.i===cheapI ? " c" : (x.i===dearI ? " d" : "");
-    return `<i class="${cls.trim()}" style="inset-inline-start:${pos.toFixed(1)}%"></i>`;
-  }).join("");
+  const card=document.createElement("div");
+  card.className="card";
 
-  const unit = it.q && it.u && it.u !== "לא ידוע" ? ` · ${it.q} ${it.u}` : "";
+  const h=document.createElement("h2");
+  h.textContent=it.n;
+  card.appendChild(h);
 
-  el.innerHTML = `
-    <div class="info">
-      <div class="nm"></div>
-      <div class="meta"><span class="bc">${it.b}</span> · ${vals.length} סניפים${unit}</div>
-    </div>
-    <div class="spread">
-      <div class="spread-nums"><span class="c">${nis(lo)}</span><span class="d">${nis(hi)}</span></div>
-      <div class="track"><div class="line"></div>${dots}</div>
-      <div class="where">הכי זול ב<b>${DATA.stores[cheapI].n}</b> · פער ${pct}%</div>
-    </div>
-    <button class="add" type="button" aria-label="הוסף לסל">${BASKET[it.b] ? "✓" : "+"}</button>`;
-  el.querySelector(".nm").textContent = it.n;
+  const sum=document.createElement("div");
+  sum.className="sumline";
+  const save=hi-lo;
+  sum.innerHTML = `<span>הכי זול ב<b>${rows[0].store}</b></span>` +
+                  `<span>חוסך <b>${nis(save)}</b> לעומת היקר ביותר</span>` +
+                  `<span>${rows.length} סניפים</span>`;
+  card.appendChild(sum);
 
-  el.querySelector(".add").addEventListener("click", ev => {
-    ev.stopPropagation();
-    if(BASKET[it.b]){ delete BASKET[it.b]; toast("הוסר מהסל"); }
-    else { BASKET[it.b] = {n:it.n, q:1}; toast("נוסף לסל"); }
-    save(); render(document.getElementById("q").value); renderBasket();
+  const tbl=document.createElement("table");
+  const tb=document.createElement("tbody");
+  shown.forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    const isBest = r.price===lo, isWorst = r.price===hi && !isBest;
+    if(isBest) tr.className="best";
+    else if(isWorst) tr.className="worst";
+    const diff = r.price-lo;
+    tr.innerHTML=
+      `<td class="rank">${i+1}</td>` +
+      `<td class="store"></td>` +
+      `<td class="price">${nis(r.price)}</td>` +
+      `<td class="extra">${isBest ? "הכי זול" : "+"+nis(diff)}</td>`;
+    tr.querySelector(".store").textContent=r.store;
+    if(isWorst){
+      const tag=document.createElement("span");
+      tag.className="tagline"; tag.textContent="הכי יקר";
+      tr.querySelector(".store").appendChild(tag);
+    }
+    tb.appendChild(tr);
   });
+  tbl.appendChild(tb);
+  card.appendChild(tbl);
 
-  el.querySelector(".info").addEventListener("click", ()=>{
-    openBc = openBc === it.b ? null : it.b;
-    render(document.getElementById("q").value);
-  });
-  el.querySelector(".info").style.cursor = "pointer";
-
-  if(openBc === it.b){
-    const d = document.createElement("div");
-    d.className = "detail";
-    DATA.stores.forEach((s,i)=>{
-      const v = it.p[i];
-      const cls = v==null ? "na" : (i===cheapI ? "c" : (i===dearI ? "d" : ""));
-      const row = document.createElement("div");
-      row.innerHTML = `<span class="s"></span><span class="p ${cls}">${v==null ? "אין" : nis(v)}</span>`;
-      row.querySelector(".s").textContent = s.n;
-      d.appendChild(row);
+  if(rows.length>SHOW){
+    const btn=document.createElement("button");
+    btn.className="more"; btn.type="button";
+    btn.textContent = open ? "הצג פחות" : `הצג את כל ${rows.length} הסניפים`;
+    btn.addEventListener("click",()=>{
+      open ? openAll.delete(it.b) : openAll.add(it.b);
+      render(document.getElementById("q").value);
     });
-    el.appendChild(d);
+    card.appendChild(btn);
   }
-  return el;
+  return card;
 }
-
-function renderBasket(){
-  const keys = Object.keys(BASKET);
-  document.getElementById("basketCount").textContent = keys.length ? `${keys.length} פריטים` : "ריק";
-  document.getElementById("emptyNote").hidden = keys.length > 0;
-  document.getElementById("summary").hidden = keys.length === 0;
-  if(!keys.length || !DATA) return;
-
-  const byBc = {};
-  DATA.items.forEach(it => { if(BASKET[it.b]) byBc[it.b] = it; });
-
-  const totals = DATA.stores.map((s,i)=>{
-    let sum = 0, missing = 0;
-    keys.forEach(b=>{
-      const it = byBc[b];
-      if(!it){ missing++; return; }
-      const v = it.p[i];
-      if(v==null){ missing++; sum += it.lo; }   // חסר בסניף: נספר לפי הזול, ומסומן
-      else sum += v;
-    });
-    return {name:s.n, sum, missing};
-  });
-
-  const sorted = [...totals].sort((a,b)=>a.sum-b.sum);
-  const best = sorted[0], worst = sorted[sorted.length-1];
-
-  document.getElementById("tItems").textContent     = keys.length;
-  document.getElementById("tBest").textContent      = nis(best.sum);
-  document.getElementById("tBestName").textContent  = best.name;
-  document.getElementById("tWorst").textContent     = nis(worst.sum);
-  document.getElementById("tWorstName").textContent = worst.name;
-  document.getElementById("tSave").textContent      = nis(worst.sum - best.sum);
-
-  // קנייה חודשית: 12 קניות בשנה. מושווה מול חציון הסניפים, לא מול היקר שבהם,
-  // כי אף אחד לא קונה דווקא בסניף הכי יקר.
-  const median = sorted[Math.floor(sorted.length/2)].sum;
-  const perShop = Math.max(0, median - best.sum);
-  document.getElementById("yearNote").innerHTML =
-    `לקנות את הסל הזה ב<b style="font-size:13.5px">${best.name}</b> במקום בסניף ממוצע חוסך ` +
-    `<b>${nis(perShop)}</b> בכל קנייה. בקנייה חודשית זה <b>${nis(perShop*12)}</b> בשנה.`;
-
-  const host = document.getElementById("rank");
-  host.innerHTML = "";
-  const max = worst.sum || 1;
-  sorted.forEach((t,i)=>{
-    const r = document.createElement("div");
-    r.className = "rank-row" + (i===0 ? " best" : "");
-    r.innerHTML = `
-      <span class="pos">${i+1}</span>
-      <span class="rank-name">
-        <span></span>
-        ${t.missing ? `<span class="miss">${t.missing} חסרים</span>` : ""}
-      </span>
-      <span class="rank-sum">${nis(t.sum)}</span>`;
-    r.querySelector(".rank-name span").textContent = t.name;
-    host.appendChild(r);
-  });
-}
-
-document.getElementById("clearBtn").addEventListener("click", ()=>{
-  if(!Object.keys(BASKET).length) return toast("הסל כבר ריק");
-  BASKET = {}; save(); render(document.getElementById("q").value); renderBasket();
-  toast("הסל נוקה");
-});
-
-document.getElementById("copyBtn").addEventListener("click", ()=>{
-  const keys = Object.keys(BASKET);
-  if(!keys.length) return toast("אין מה להעתיק, הסל ריק");
-  const lines = keys.map(b => `${b}  ${BASKET[b].n}`);
-  const txt = "הסל שלי (" + keys.length + " פריטים):\n" + lines.join("\n");
-  navigator.clipboard.writeText(txt)
-    .then(()=>toast("הסל הועתק. הדביקו לי אותו בצ׳אט"))
-    .catch(()=>toast("ההעתקה נחסמה בדפדפן"));
-});
 </script>
 
 <div id="installBar" hidden style="
