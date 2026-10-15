@@ -328,19 +328,28 @@ function buildQuick(){
 const byCode=b=>DATA.items.find(x=>x.b===b);
 const storeName=i=>(i==null?"":(DATA.stores[i]||""));
 
-/* מילה שמתחילה במה שהוקלד עדיפה על התאמה באמצע מילה: מי שמחפש "חלב"
-   מתכוון ל"חלב תנובה", לא ל"שוקולד חלב". */
+/* דירוג התוצאות. מי שמקליד "חלב" מתכוון ל"חלב תנובה 3%", לא ל"כיף כף חלב"
+   ולא ל"דנונה חלבון". לכן ארבע רמות, מהחזקה לחלשה:
+     0  השם פותח במילה המדויקת        "חלב תנובה 3%"
+     1  המילה המדויקת מופיעה בהמשך     "משקה חלב בננה"
+     2  מילה שמתחילה בה                "חלבון", "חלבי"
+     3  רצף אותיות בתוך מילה           הכל השאר
+   בתוך אותה רמה נשמר הסדר המקורי, שכבר ממוין לפי נפוצוּת המוצר. */
 function match(term){
   const t=term.trim();
   if(t.length<2) return [];
-  const starts=[], inside=[];
+  const buckets=[[],[],[],[]];
   for(const it of DATA.items){
-    const words=it.n.split(/[\s,.\-()]+/);
-    if(words.some(w=>w.startsWith(t))) starts.push(it);
-    else if(it.n.includes(t)) inside.push(it);
-    if(starts.length>60) break;
+    const words=it.n.split(/[\s,.\-()\/]+/).filter(Boolean);
+    let tier=-1;
+    if(words[0]===t) tier=0;
+    else if(words.includes(t)) tier=1;
+    else if(words.some(w=>w.startsWith(t))) tier=2;
+    else if(it.n.includes(t)) tier=3;
+    if(tier>=0) buckets[tier].push(it);
+    if(buckets[0].length+buckets[1].length>80) break;
   }
-  return [...starts,...inside];
+  return [...buckets[0],...buckets[1],...buckets[2],...buckets[3]];
 }
 
 /* ---------- basket mode ---------- */
