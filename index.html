@@ -502,10 +502,16 @@ function renderResult(){
       <span class="nm"></span><span class="amt">${nis(best.sum)}</span>
       <span class="where"></span>
     </div>
-    <div class="saveline">
-      <b>${nCheapest}</b> מתוך ${items.length} המוצרים הכי זולים כאן.
-      חוסך <b>${nis(med.sum-best.sum)}</b> לעומת רשת ממוצעת,
-      ו<b>${nis(worst.sum-best.sum)}</b> לעומת היקרה ביותר.${missNote}
+    <div class="saveline">${
+      // "חוסך 0 ₪" מופיע כשאין אף רשת אחרת שמוכרת את אותו סל, ואז המשפט
+      // מטעה: אין חיסכון כי אין מתחרה, לא כי המחירים שווים.
+      peers.length > 1
+        ? `<b>${nCheapest}</b> מתוך ${items.length} המוצרים הכי זולים כאן.
+           חוסך <b>${nis(med.sum-best.sum)}</b> לעומת רשת ממוצעת,
+           ו<b>${nis(worst.sum-best.sum)}</b> לעומת היקרה ביותר.`
+        : `<b>${nCheapest}</b> מתוך ${items.length} המוצרים הכי זולים כאן.
+           זו הרשת היחידה שמוכרת את כל הסל, ולכן אין מול מי להשוות את הסכום המלא.`
+    }${missNote}
     </div></div>`;
   sec.querySelector(".winner .nm").textContent=best.name;
   sec.querySelector(".winner .where").textContent = branch ? "הסניף הזול: "+branch : "";
