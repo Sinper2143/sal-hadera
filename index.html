@@ -84,10 +84,18 @@ input[type=search]{width:100%; border:1px solid var(--line); background:var(--gr
 input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
 .searchbar::before{content:"⌕"; position:absolute; inset-inline-end:14px; top:50%;
   transform:translateY(-54%); color:var(--muted); font-size:20px; pointer-events:none}
-.quick{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
-.quick button{border:1px solid var(--line); background:var(--chip); color:var(--ink-2);
+.quick{display:flex; flex-direction:column; gap:0; margin-top:12px;
+  border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.cat + .cat{border-top:1px solid var(--line-2)}
+.cat-hd{width:100%; display:flex; align-items:center; justify-content:space-between;
+  gap:10px; background:var(--surface); border:0; color:var(--ink);
+  font:inherit; font-size:14.5px; font-weight:600; padding:11px 14px; cursor:pointer; text-align:start}
+.cat-hd:hover{background:var(--chip)}
+.cat-hd .chev{color:var(--accent); font-size:16px; font-weight:700; line-height:1; flex:none}
+.cat-body{display:flex; flex-wrap:wrap; gap:6px; padding:4px 14px 13px; background:var(--surface)}
+.cat-body button{border:1px solid var(--line); background:var(--chip); color:var(--ink-2);
   border-radius:999px; padding:5px 12px; font:inherit; font-size:12.5px; cursor:pointer}
-.quick button:hover{border-color:var(--accent); color:var(--accent)}
+.cat-body button:hover{border-color:var(--accent); color:var(--accent)}
 .sugg{margin-top:10px; background:var(--line-2); border:1px solid var(--line-2);
   border-radius:9px; overflow:hidden; display:flex; flex-direction:column; gap:1px; max-height:330px; overflow-y:auto}
 .sugg:empty{display:none}
@@ -226,7 +234,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
   <section id="paneBasket">
     <div class="panel">
       <h2>אילו מוצרים בסל?</h2>
-      <p class="lead">הקלידו סוג מוצר, למשל <b>חלב</b> או <b>מרכך</b>, והרשימה תיפתח.</p>
+      <p class="lead">הקלידו סוג מוצר, או פתחו קטגוריה למטה ובחרו מתוכה.</p>
       <div class="searchbar">
         <input id="qb" type="search" placeholder="חלב, ביצים, קוטג׳, מרכך כביסה…" autocomplete="off" enterkeyhint="search">
       </div>
@@ -335,16 +343,51 @@ MODES.forEach(([b,p])=>{
   });
 });
 
-const QUICK=["חלב","ביצים","קוטג","גבינה","יוגורט","שמנת","חמאה","לחם","אורז","פסטה",
-             "שמן","קפה","סוכר","קורנפלקס","במבה","ביסלי","שוקולד","מרכך","אבקת כביסה",
-             "נייר טואלט","שמפו","סבון כלים"];
+/* סוגי המוצרים שמשק בית קונה, מסודרים לפי מדף. כל מילה כאן היא חיפוש,
+   ולא קטגוריה סגורה: הלחיצה ממלאת את תיבת החיפוש ופותחת את כל ההתאמות. */
+const GROUPS=[
+ ["מוצרי חלב", ["חלב","קוטג","גבינה","גבינת","יוגורט","שמנת","חמאה","מעדן","לבן","אשל","מוצרלה","צהובה","בולגרית","פטה","ריקוטה","שוקו"]],
+ ["בשר, עוף והודו", ["עוף","חזה עוף","שניצל","כרעיים","כנפיים","פרגית","בשר טחון","אנטריקוט","סטייק","המבורגר","קבב","נקניק","נקניקיות","הודו","כבד","שווארמה","אסאדו"]],
+ ["דגים", ["טונה","סלמון","דג","פילה דג","מלוח","הרינג","סרדינים"]],
+ ["ירקות", ["עגבניה","מלפפון","בצל","גזר","תפוח אדמה","בטטה","פלפל","חסה","כרוב","כרובית","ברוקולי","קישוא","חציל","שום","דלעת","תירס","סלרי","פטרוזיליה","כוסברה","נענע","שמיר","אבוקדו","לימון"]],
+ ["פירות", ["תפוח","בננה","תפוז","קלמנטינה","אשכולית","ענבים","אבטיח","מלון","אפרסק","נקטרינה","שזיף","אגס","תות","רימון","מנגו","אננס","קיווי","תמרים","אבטיח"]],
+ ["לחם ומאפים", ["לחם","פיתות","לחמניות","חלה","בגט","טורטיה","פיתה","מצות","קרקר"]],
+ ["מזווה ויסודות", ["אורז","פסטה","ספגטי","קמח","סוכר","מלח","שמן","שמן זית","קוסקוס","בורגול","קינואה","עדשים","חומוס","שעועית","פתיתים","נודלס","אבקת מרק","טחינה","קטשופ","מיונז","חרדל","ריבה","דבש","ממרח","שימורים","רוטב"]],
+ ["קפה, תה ומשקה חם", ["קפה","נס קפה","תה","סוכרזית","שוקולית","קקאו"]],
+ ["משקאות", ["קולה","מים","מיץ","סודה","משקה","בירה","יין","נביעות","פריגת","פרימור","XL","אייס"]],
+ ["חטיפים ומתוקים", ["במבה","ביסלי","שוקולד","עוגיות","ופל","חטיף","צ'יפס","בייגלה","סוכריות","מסטיק","עוגה","פופקורן","אגוזים","שקדים","פיצוחים"]],
+ ["קפואים", ["פיצה","קפוא","אפונה","תערובת ירקות","צ'יפס קפוא","גלידה","בצק","מאפה"]],
+ ["דגני בוקר", ["קורנפלקס","גרנולה","דגני","פתיתי","שיבולת שועל","חלבה"]],
+ ["ניקיון", ["אבקת כביסה","ג'ל כביסה","מרכך כביסה","סבון כלים","אקונומיקה","נוזל רצפות","מנקה","מטהר","וניש","אריאל","פרסיל","טאבלט מדיח","מגבונים","שקיות אשפה","ספוג","מטלית","נייר סופג","כפפות"]],
+ ["טואלטיקה", ["נייר טואלט","שמפו","מרכך שיער","סבון","אל סבון","מקלחת","דאודורנט","משחת שיניים","מברשת שיניים","מי פה","גילוח","קרם","תחבושות","טמפונים","חיתולים","מגבונים לחים"]],
+ ["תינוקות וחיות", ["מטרנה","סימילאק","דייסה","חיתולים","מזון לכלב","מזון לחתול","חול לחתול"]],
+];
 function buildQuick(){
   [["quickB","qb",termB],["quickF","qf",termF]].forEach(([host,input,fn])=>{
     const h=document.getElementById(host);
-    QUICK.forEach(w=>{
-      const b=document.createElement("button"); b.type="button"; b.textContent=w;
-      b.addEventListener("click",()=>{ document.getElementById(input).value=w; fn(w); });
-      h.appendChild(b);
+    h.innerHTML="";
+    GROUPS.forEach(([title,words])=>{
+      const sec=document.createElement("div"); sec.className="cat";
+      const hd=document.createElement("button");
+      hd.type="button"; hd.className="cat-hd"; hd.setAttribute("aria-expanded","false");
+      hd.innerHTML=`<span></span><span class="chev">+</span>`;
+      hd.querySelector("span").textContent=title;
+      const body=document.createElement("div"); body.className="cat-body"; body.hidden=true;
+      words.forEach(w=>{
+        const b=document.createElement("button"); b.type="button"; b.textContent=w;
+        b.addEventListener("click",()=>{
+          document.getElementById(input).value=w; fn(w);
+          document.getElementById(input).scrollIntoView({behavior:"smooth",block:"center"});
+        });
+        body.appendChild(b);
+      });
+      hd.addEventListener("click",()=>{
+        const open=!body.hidden;
+        body.hidden=open;
+        hd.setAttribute("aria-expanded", open?"false":"true");
+        hd.querySelector(".chev").textContent= open?"+":"−";
+      });
+      sec.appendChild(hd); sec.appendChild(body); h.appendChild(sec);
     });
   });
 }
