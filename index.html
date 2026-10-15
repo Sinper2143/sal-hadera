@@ -383,9 +383,18 @@ function buildQuick(){
       });
       hd.addEventListener("click",()=>{
         const open=!body.hidden;
+        // קטגוריה אחת פתוחה בכל רגע. בלי זה הרשימה מתארכת עם כל פתיחה
+        // והכותרות נדחפות מחוץ למסך.
+        h.querySelectorAll(".cat-hd").forEach(x=>{
+          if(x===hd) return;
+          x.nextElementSibling.hidden=true;
+          x.setAttribute("aria-expanded","false");
+          x.querySelector(".chev").textContent="+";
+        });
         body.hidden=open;
         hd.setAttribute("aria-expanded", open?"false":"true");
         hd.querySelector(".chev").textContent= open?"+":"−";
+        if(!open) hd.scrollIntoView({behavior:"smooth",block:"nearest"});
       });
       sec.appendChild(hd); sec.appendChild(body); h.appendChild(sec);
     });
