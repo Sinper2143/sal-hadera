@@ -2,7 +2,7 @@
 // שתי אסטרטגיות נפרדות, כי לנכסים ולנתונים יש צרכים הפוכים:
 //   נכסים (HTML/CSS/אייקונים) — cache-first, כדי שהאפליקציה תיפתח מיד גם בלי רשת.
 //   data.json                 — network-first, כי מחיר ישן גרוע ממסך טעינה.
-const VERSION = "sal-hadera-354d04b7d114";
+const VERSION = "sal-hadera-4c5b295cf08b";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
                "./icon-192.png", "./icon-512.png"];
 

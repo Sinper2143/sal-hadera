@@ -419,33 +419,24 @@ function renderResult(){
   box.innerHTML="";
   if(!calculated || !items.length) return;
 
-  // עלות הסל בכל רשת. רשת שחסר בה מוצר אינה בת-השוואה לרשת מלאה,
-  // כי הסכום שלה נמוך רק מפני שלא הכל נספר.
+  // עלות הסל בכל רשת. מוצר שהרשת לא מוכרת נספר במחיר הזול ביותר בשוק,
+  // אחרת רשת שחסר בה פריט הייתה נראית זולה רק מפני שלא הכל נספר, והדירוג
+  // היה מטעה. כך כל הרשתות ניתנות להשוואה, והחוסר מצוין בנפרד.
   const totals=DATA.chains.map((c,i)=>{
-    let sum=0, missing=0;
-    items.forEach(it=>{ const v=it.p[i]; if(v==null) missing++; else sum+=v; });
-    return {i, name:c.n, sum, missing};
+    let own=0, missing=0, elsewhere=0;
+    items.forEach(it=>{
+      const v=it.p[i];
+      if(v==null){ missing++; elsewhere+=it.lo; } else own+=v;
+    });
+    return {i, name:c.n, sum:own+elsewhere, own, missing, elsewhere};
   });
   const full=totals.filter(t=>t.missing===0).sort((a,b)=>a.sum-b.sum);
-  const part=totals.filter(t=>t.missing>0).sort((a,b)=>a.missing-b.missing||a.sum-b.sum);
+  const part=totals.filter(t=>t.missing>0).sort((a,b)=>a.sum-b.sum);
 
   const sec=document.createElement("section"); sec.className="verdict";
 
-  if(!full.length){
-    sec.innerHTML=`<div class="top"><div class="cap">הסל שלכם</div>
-      <p style="margin:8px 0 0;font-size:14px;color:var(--ink-2);line-height:1.6">
-      אין רשת אחת שמוכרת את כל ${items.length} המוצרים. למטה הרשתות לפי כמה מהסל יש בהן.</p></div>`;
-    const list=document.createElement("div");
-    part.slice(0,8).forEach((t,i)=>{
-      const r=document.createElement("div"); r.className="rk";
-      r.innerHTML=`<span class="pos">${i+1}</span><span class="nm"></span>
-        <span class="amt">${nis(t.sum)}<span class="gap">${t.missing} חסרים</span></span>`;
-      r.querySelector(".nm").textContent=t.name; list.appendChild(r);
-    });
-    sec.appendChild(list); box.appendChild(sec); return;
-  }
-
-  const best=full[0], worst=full[full.length-1], med=full[Math.floor(full.length/2)];
+  const ranked=[...totals].sort((a,b)=>a.sum-b.sum);
+  const best=ranked[0], worst=ranked[ranked.length-1], med=ranked[Math.floor(ranked.length/2)];
   const bi=best.i;
 
   // לכל מוצר: האם יש רשת זולה יותר מהמנצחת, ובכמה
@@ -468,6 +459,9 @@ function renderResult(){
   items.forEach(it=>{ const w=storeName(it.w[bi]); if(w) tally[w]=(tally[w]||0)+1; });
   const branch=Object.keys(tally).sort((a,b)=>tally[b]-tally[a])[0]||"";
 
+  const missNote = best.missing
+    ? ` ${best.missing} מהמוצרים לא נמכרים שם, והמחיר שלהם נספר לפי הרשת הזולה שכן מוכרת אותם.`
+    : "";
   sec.innerHTML=`<div class="top">
     <div class="cap">הסל הזה הכי זול ב</div>
     <div class="winner">
@@ -477,7 +471,7 @@ function renderResult(){
     <div class="saveline">
       <b>${nCheapest}</b> מתוך ${items.length} המוצרים הכי זולים כאן.
       חוסך <b>${nis(med.sum-best.sum)}</b> לעומת רשת ממוצעת,
-      ו<b>${nis(worst.sum-best.sum)}</b> לעומת היקרה ביותר.
+      ו<b>${nis(worst.sum-best.sum)}</b> לעומת היקרה ביותר.${missNote}
     </div></div>`;
   sec.querySelector(".winner .nm").textContent=best.name;
   sec.querySelector(".winner .where").textContent = branch ? "הסניף הזול: "+branch : "";
@@ -487,8 +481,14 @@ function renderResult(){
     const row=document.createElement("div");
     if(l.here==null){
       row.className="ln miss";
-      row.innerHTML=`<span class="ic">–</span><span class="nm"></span><span class="amt">לא נמכר כאן</span>`;
+      row.innerHTML=`<span class="ic">–</span><span class="nm"></span>
+        <span class="amt">${nis(l.it.lo)}</span>`;
       row.querySelector(".nm").textContent=l.it.n;
+      const a=document.createElement("span"); a.className="alt";
+      a.style.color="var(--muted)";
+      a.innerHTML=`לא נמכר ב${best.name}. המחיר הוא של <b>${l.bestOther?l.bestOther.chain:"הרשת הזולה"}</b>, `+
+                  `ותצטרכו לקנות אותו שם.`;
+      row.appendChild(a);
     }else{
       row.className="ln"+(l.over>0?" over":"");
       row.innerHTML=`<span class="ic">${l.over>0?"⚠":"✓"}</span>
@@ -519,14 +519,13 @@ function renderResult(){
 
   const t2=document.createElement("div"); t2.className="secttl"; t2.textContent="עלות הסל בכל רשת";
   sec.appendChild(t2);
-  const ranked=[...full,...part];
   const shown= showAllChains ? ranked : ranked.slice(0,5);
   const rl=document.createElement("div");
   shown.forEach((t,i)=>{
     const r=document.createElement("div");
-    r.className="rk"+(i===0&&t.missing===0?" first":"");
-    const diff = (t.missing===0&&i>0) ? `<span class="diff">+${nis(t.sum-best.sum)}</span>` : "";
-    const gap  = t.missing ? `<span class="gap">${t.missing} חסרים</span>` : "";
+    r.className="rk"+(i===0?" first":"");
+    const diff = i>0 ? `<span class="diff">+${nis(t.sum-best.sum)}</span>` : "";
+    const gap  = t.missing ? `<span class="gap">${t.missing} לא נמכרים שם</span>` : "";
     r.innerHTML=`<span class="pos">${i+1}</span><span class="nm"></span>
       <span class="amt">${nis(t.sum)}${diff}</span>`;
     const nm=r.querySelector(".nm"); nm.textContent=t.name;
