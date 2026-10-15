@@ -155,13 +155,13 @@ input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
 .overnote{padding:12px 18px; background:var(--dear-bg); border-top:1px solid var(--dear-line);
   font-size:13px; color:var(--ink-2); line-height:1.55}
 .overnote b{color:var(--dear); font-variant-numeric:tabular-nums}
-.rk{display:grid; grid-template-columns:24px 1fr auto; gap:10px; align-items:center;
-  padding:8px 18px; font-size:13.5px}
+.rk{display:grid; grid-template-columns:24px 1fr auto; gap:10px; align-items:start;
+  padding:10px 18px; font-size:13.5px}
 .rk + .rk{border-top:1px solid var(--line-2)}
 .rk .pos{color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums}
-.rk .nm{color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.rk .nm{color:var(--ink-2); line-height:1.45; min-width:0}
 .rk .amt{font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
-.rk .diff{font-size:12px; color:var(--muted); margin-inline-start:7px}
+.rk .diff{font-size:12px; color:var(--muted)}
 .rk.first{background:var(--cheap-bg)} .rk.first .nm{font-weight:700; color:var(--ink)}
 .rk.first .amt{color:var(--cheap)}
 .rk .gap{font-size:11.5px; color:var(--muted); margin-inline-start:6px}
@@ -551,23 +551,41 @@ function renderResult(){
     sec.appendChild(n);
   }
 
-  const t2=document.createElement("div"); t2.className="secttl"; t2.textContent="עלות הסל בכל רשת";
+  const t2=document.createElement("div"); t2.className="secttl";
+  t2.innerHTML=`עלות הסל בכל רשת<br><span style="font-family:Assistant,sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);line-height:1.5">רשת שלא מוכרת את כל הסל מוצגת עם סכום קטן יותר כי היא מוכרת פחות פריטים. ההשוואה שמתחתיה היא על המוצרים המשותפים בלבד.</span>`;
   sec.appendChild(t2);
-  const shown= showAllChains ? ranked : ranked.slice(0,5);
+  // הפרש בין סכומים של סלים שונים הוא מספר חסר משמעות: רשת שמוכרת שלושה
+  // מוצרים תמיד תיראה זולה מרשת שמוכרת שבעה. לכן כל רשת מושווית למנצחת
+  // על הפריטים ששתיהן מוכרות, וזה ההפרש שמוצג.
+  ranked.forEach(t=>{
+    let mine=0, atBest=0, n=0;
+    items.forEach(it=>{
+      const v=it.p[t.i], b=it.p[bi];
+      if(v!=null && b!=null){ mine+=v; atBest+=b; n++; }
+    });
+    t.mine=mine; t.atBest=atBest; t.shared=n;
+  });
+
+  const shown= showAllChains ? ranked : ranked.slice(0,6);
   const rl=document.createElement("div");
   shown.forEach((t,i)=>{
     const r=document.createElement("div");
     r.className="rk"+(i===0?" first":"");
-    // הפרש מוצג רק מול רשת שמוכרת בדיוק את אותם פריטים. אחרת זה כמו
-    // להשוות סל של חמישה מוצרים לסל של שלושה ולקרוא לזה הנחה.
-    const diff = (i>0 && t.have===best.have)
-               ? `<span class="diff">+${nis(t.sum-best.sum)}</span>` : "";
-    const gap  = t.missing
-               ? `<span class="gap">${t.have} מתוך ${items.length} בלבד</span>` : "";
+    let note="";
+    if(i>0 && t.shared>0){
+      const d=t.mine-t.atBest;
+      const same=t.shared===items.length;
+      const scope=same?"":` על ${t.shared} המוצרים המשותפים`;
+      note = Math.abs(d)<0.005
+        ? `<span class="diff">אותו מחיר${scope}</span>`
+        : `<span class="diff">${d>0?"יקר ב-":"זול ב-"}${nis(Math.abs(d))}${scope}</span>`;
+    }
+    const gap = t.missing ? `<span class="gap">${t.have} מתוך ${items.length}</span>` : "";
     r.innerHTML=`<span class="pos">${i+1}</span><span class="nm"></span>
-      <span class="amt">${nis(t.sum)}${diff}</span>`;
+      <span class="amt">${nis(t.sum)}</span>`;
     const nm=r.querySelector(".nm"); nm.textContent=t.name;
     if(gap) nm.insertAdjacentHTML("beforeend",gap);
+    if(note) nm.insertAdjacentHTML("beforeend","<br>"+note);
     rl.appendChild(r);
   });
   sec.appendChild(rl);
