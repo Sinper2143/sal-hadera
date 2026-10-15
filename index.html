@@ -109,6 +109,8 @@ input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
 .sg button:hover{background:var(--accent); border-color:var(--accent); color:#fff}
 .sg.have button{background:var(--accent); border-color:var(--accent); color:#fff}
 .hint{font-size:12.5px; color:var(--muted); margin:10px 0 0}
+.loading{font-size:13px; color:var(--accent); margin:11px 0 0; font-weight:600}
+input[type=search]:disabled{opacity:.6}
 
 /* collected list */
 .collected{margin-top:14px; border-top:1px solid var(--line-2); padding-top:12px}
@@ -236,8 +238,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
       <h2>אילו מוצרים בסל?</h2>
       <p class="lead">הקלידו סוג מוצר, או פתחו קטגוריה למטה ובחרו מתוכה.</p>
       <div class="searchbar">
-        <input id="qb" type="search" placeholder="חלב, ביצים, קוטג׳, מרכך כביסה…" autocomplete="off" enterkeyhint="search">
+        <input id="qb" type="search" placeholder="חלב, ביצים, קוטג׳, מרכך כביסה…" autocomplete="off" enterkeyhint="search" disabled>
       </div>
+      <p class="loading" id="loading">טוענים את המחירים מ-12 הרשתות, רגע אחד…</p>
       <div class="quick" id="quickB"></div>
       <div class="sugg" id="sugg"></div>
       <p class="hint" id="hintB">כל מוצר שתוסיפו ייספר למטה.</p>
@@ -260,7 +263,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
       <h2>חיפוש מוצר בודד</h2>
       <p class="lead">מחיר אחד, בכל הרשתות, מהזול ליקר.</p>
       <div class="searchbar">
-        <input id="qf" type="search" placeholder="מה אתם מחפשים?" autocomplete="off" enterkeyhint="search">
+        <input id="qf" type="search" placeholder="מה אתם מחפשים?" autocomplete="off" enterkeyhint="search" disabled>
       </div>
       <div class="quick" id="quickF"></div>
     </div>
@@ -312,23 +315,42 @@ async function hardRefresh(){
   location.replace(location.pathname + "?v=" + Date.now());
 }
 
-fetch("data.json",{cache:"no-store"}).then(r=>r.json()).then(async d=>{
+const ss={
+  get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+};
+
+function fatal(msg){
+  const el=document.getElementById("hintB");
+  el.hidden=false;
+  el.style.color="var(--dear)";
+  el.innerHTML=msg+'<br><button class="btn" style="margin-top:9px" onclick="location.reload()">נסו שוב</button>';
+}
+
+fetch("data.json",{cache:"no-store"}).then(r=>{
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}).then(async d=>{
   if(d.schema !== SCHEMA){
-    if(!sessionStorage.getItem("salHadera.refreshed")){
-      sessionStorage.setItem("salHadera.refreshed","1");
+    if(!ss.get("salHadera.refreshed")){
+      ss.set("salHadera.refreshed","1");
       return hardRefresh();
     }
-    document.getElementById("hintB").innerHTML =
-      "הגרסה שנטענה אינה תואמת לנתונים. סגרו את הלשונית ופתחו מחדש.";
+    fatal("הגרסה שנטענה אינה תואמת לנתונים. סגרו את הלשונית ופתחו מחדש.");
     return;
   }
-  sessionStorage.removeItem("salHadera.refreshed");
+  ss.del("salHadera.refreshed");
   DATA=d;
   document.getElementById("nCh").textContent=d.chains.length;
   document.getElementById("gen").textContent=d.generated;
-  buildQuick(); renderCollected();
-}).catch(()=>{
-  document.getElementById("hintB").textContent="לא הצלחתי לטעון את המחירים. נסו לרענן.";
+  document.getElementById("loading").hidden=true;
+  document.getElementById("qb").disabled=false;
+  document.getElementById("qf").disabled=false;
+  renderCollected();
+}).catch(err=>{
+  fatal("לא הצלחתי לטעון את המחירים ("+err.message+").<br>בדקו את החיבור לאינטרנט.");
+  document.getElementById("loading").hidden=true;
 });
 
 /* mode switch */
@@ -376,6 +398,7 @@ function buildQuick(){
       words.forEach(w=>{
         const b=document.createElement("button"); b.type="button"; b.textContent=w;
         b.addEventListener("click",()=>{
+          if(!DATA){ toast("המחירים עוד נטענים, רגע אחד"); return; }
           document.getElementById(input).value=w; fn(w);
           document.getElementById(input).scrollIntoView({behavior:"smooth",block:"center"});
         });
@@ -400,7 +423,7 @@ function buildQuick(){
     });
   });
 }
-const byCode=b=>DATA.items.find(x=>x.b===b);
+const byCode=b=>DATA?DATA.items.find(x=>x.b===b):null;
 const storeName=i=>(i==null?"":(DATA.stores[i]||""));
 
 /* דירוג התוצאות. מי שמקליד "חלב" מתכוון ל"חלב תנובה 3%", לא ל"כיף כף חלב"
@@ -411,6 +434,7 @@ const storeName=i=>(i==null?"":(DATA.stores[i]||""));
      3  רצף אותיות בתוך מילה           הכל השאר
    בתוך אותה רמה נשמר הסדר המקורי, שכבר ממוין לפי נפוצוּת המוצר. */
 function match(term){
+  if(!DATA) return [];
   const t=term.trim();
   if(t.length<2) return [];
   const buckets=[[],[],[],[]];
@@ -430,6 +454,7 @@ function match(term){
 /* ---------- basket mode ---------- */
 document.getElementById("qb").addEventListener("input",e=>termB(e.target.value));
 function termB(term){
+  if(!DATA) return;
   const host=document.getElementById("sugg"); host.innerHTML="";
   const hint=document.getElementById("hintB");
   const t=(term||"").trim();
@@ -628,6 +653,7 @@ function renderResult(){
 /* ---------- single product mode ---------- */
 document.getElementById("qf").addEventListener("input",e=>termF(e.target.value));
 function termF(term){
+  if(!DATA) return;
   const t=(term||"").trim();
   const host=document.getElementById("cardsF"), cnt=document.getElementById("countF");
   host.innerHTML="";
@@ -667,6 +693,8 @@ function cardFor(it){
   tbl.appendChild(tb); card.appendChild(tbl);
   return card;
 }
+
+buildQuick();
 </script>
 
 <div id="installBar" hidden style="
