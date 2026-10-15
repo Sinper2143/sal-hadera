@@ -442,102 +442,96 @@ function renderResult(){
   box.innerHTML="";
   if(!calculated || !items.length) return;
 
-  // עלות הסל בכל רשת, רק לפי מה שהיא באמת מוכרת.
+  // כמה עולה הסל השלם אם מתחילים ברשת הזו.
   //
-  // רק רשת שמוכרת את כל הסל מתמודדת על המקום הראשון. שתי דרכים לטפל בחוסר
-  // נבדקו ונפסלו: התעלמות מהפריט החסר הופכת רשת דלה לזולה מדומה, והשלמה
-  // לפי המחיר הזול בשוק נותנת לרשת שלא מוכרת כלום בדיוק את המינימום
-  // התיאורטי, כך שהיא מנצחת תמיד. לכן רשת חסרה יורדת אל מתחת לכל המלאות.
+  // השאלה היא "כמה אשלם על כל הסל", ולכן מוצר שהרשת לא מוכרת נספר במחיר
+  // הזול ביותר שקיים במקום אחר, והקנייה מתפצלת. חייבים לספור אותו: בלעדיו
+  // רשת שמוכרת שלושה מוצרים נראית זולה מרשת שמוכרת שבעה, וזו השוואה בין
+  // שני סלים שונים שהציגה את היקר כזול.
   const totals=DATA.chains.map((c,i)=>{
-    let sum=0, missing=0;
-    items.forEach(it=>{ const v=it.p[i]; if(v==null) missing++; else sum+=v; });
-    return {i, name:c.n, sum, missing, have:items.length-missing};
+    let here=0, elsewhere=0, have=0, missing=0;
+    items.forEach(it=>{
+      const v=it.p[i];
+      if(v==null){ missing++; elsewhere+=it.lo; } else { have++; here+=v; }
+    });
+    return {i, name:c.n, here, elsewhere, total:here+elsewhere, have, missing};
   });
-  const full=totals.filter(t=>t.missing===0 && t.have>0).sort((a,b)=>a.sum-b.sum);
-  const part=totals.filter(t=>t.missing>0 && t.have>0)
-                   .sort((a,b)=>b.have-a.have || a.sum-b.sum);
+  const ranked=totals.filter(t=>t.have>0).sort((a,b)=>a.total-b.total || b.have-a.have);
+  if(!ranked.length){
+    const s=document.createElement("section"); s.className="verdict";
+    s.innerHTML='<div class="top"><div class="cap">הסל שלכם</div>'+
+      '<p style="margin:8px 0 0;font-size:14px;color:var(--ink-2)">אף רשת לא מוכרת את המוצרים האלה.</p></div>';
+    box.appendChild(s); return;
+  }
+
+  const best=ranked[0], bi=best.i;
+  const worst=ranked[ranked.length-1];
+  const oneStop=totals.filter(t=>t.missing===0).sort((a,b)=>a.total-b.total)[0]||null;
 
   const sec=document.createElement("section"); sec.className="verdict";
 
-  const ranked=[...full,...part];
-  if(!ranked.length){
-    sec.innerHTML=`<div class="top"><div class="cap">הסל שלכם</div>
-      <p style="margin:8px 0 0;font-size:14px;color:var(--ink-2)">
-      אף רשת לא מוכרת את המוצרים האלה.</p></div>`;
-    box.appendChild(sec); return;
-  }
-  const best=ranked[0];
-  // ההשוואה היא רק בין רשתות שמוכרות את אותו סל, אחרת הסכומים אינם מאותה סקאלה
-  const peers=full.length?full:part.filter(t=>t.have===best.have);
-  const worst=peers[peers.length-1], med=peers[Math.floor(peers.length/2)];
-  const bi=best.i;
-
-  // לכל מוצר: האם יש רשת זולה יותר מהמנצחת, ובכמה
-  const lines=items.map(it=>{
-    const here=it.p[bi];
-    let bestOther=null;
-    it.p.forEach((v,i)=>{
-      if(v==null||i===bi) return;
-      if(bestOther===null||v<bestOther.price) bestOther={price:v, chain:DATA.chains[i].n, where:storeName(it.w[i])};
-    });
-    const over = (here!=null && bestOther && bestOther.price < here-0.005)
-               ? here-bestOther.price : 0;
-    return {it, here, bestOther, over};
-  });
-  const totalOver=lines.reduce((s,l)=>s+l.over,0);
-  const nCheapest=lines.filter(l=>l.here!=null&&l.over===0).length;
-  // סניף אחד לכל הרשת הוא קירוב: מוצרים שונים יכולים להיות זולים בסניפים
-  // שונים שלה. מציגים את הסניף שמחזיק את המחיר הזול הכי הרבה פעמים.
+  // הסניף שמחזיק את המחיר הזול הכי הרבה פעמים ברשת המנצחת
   const tally={};
   items.forEach(it=>{ const w=storeName(it.w[bi]); if(w) tally[w]=(tally[w]||0)+1; });
   const branch=Object.keys(tally).sort((a,b)=>tally[b]-tally[a])[0]||"";
 
-  const missNote = best.missing
-    ? ` שימו לב: אף רשת לא מוכרת את כל ${items.length} המוצרים. כאן יש ${best.have} מהם, `+
-      `יותר מכל רשת אחרת, והמחיר הוא עליהם בלבד.`
-    : "";
+  const split = best.missing
+    ? `${best.have} מוצרים שם ב-<b>${nis(best.here)}</b>, ועוד ${best.missing} שתצטרכו לקנות במקום אחר ב-<b>${nis(best.elsewhere)}</b>.`
+    : `כל ${items.length} המוצרים נמכרים שם.`;
+
   sec.innerHTML=`<div class="top">
-    <div class="cap">הסל הזה הכי זול ב</div>
+    <div class="cap">הסל הזול ביותר</div>
     <div class="winner">
-      <span class="nm"></span><span class="amt">${nis(best.sum)}</span>
+      <span class="nm"></span><span class="amt">${nis(best.total)}</span>
       <span class="where"></span>
     </div>
-    <div class="saveline">${
-      // "חוסך 0 ₪" מופיע כשאין אף רשת אחרת שמוכרת את אותו סל, ואז המשפט
-      // מטעה: אין חיסכון כי אין מתחרה, לא כי המחירים שווים.
-      peers.length > 1
-        ? `<b>${nCheapest}</b> מתוך ${items.length} המוצרים הכי זולים כאן.
-           חוסך <b>${nis(med.sum-best.sum)}</b> לעומת רשת ממוצעת,
-           ו<b>${nis(worst.sum-best.sum)}</b> לעומת היקרה ביותר.`
-        : `<b>${nCheapest}</b> מתוך ${items.length} המוצרים הכי זולים כאן.
-           זו הרשת היחידה שמוכרת את כל הסל, ולכן אין מול מי להשוות את הסכום המלא.`
-    }${missNote}
+    <div class="saveline">${split}
+      חוסך <b>${nis(worst.total-best.total)}</b> לעומת האפשרות היקרה ביותר.
     </div></div>`;
   sec.querySelector(".winner .nm").textContent=best.name;
   sec.querySelector(".winner .where").textContent = branch ? "הסניף הזול: "+branch : "";
 
+  // אם הזול דורש כמה עצירות, הקנייה במקום אחד היא אלטרנטיבה אמיתית
+  if(best.missing && oneStop && oneStop.i!==bi){
+    const d=document.createElement("div"); d.className="overnote";
+    d.style.background="var(--accent-soft)"; d.style.borderTopColor="var(--line)";
+    const extra=oneStop.total-best.total;
+    d.innerHTML=`להכל במקום אחד: <b style="color:var(--accent)">${oneStop.name}</b> ב-`+
+      `<b style="color:var(--accent)">${nis(oneStop.total)}</b>, `+
+      (extra>0.005 ? `יקר ב-<b style="color:var(--accent)">${nis(extra)}</b> אבל בעצירה אחת.`
+                   : `ובאותו מחיר.`);
+    sec.appendChild(d);
+  }
+
+  // שורה לכל מוצר: המחיר ברשת המנצחת, או היכן לקנות אותו אם אינו נמכר שם
   const ls=document.createElement("div"); ls.className="lines";
-  lines.forEach(l=>{
+  let over=0, overN=0;
+  items.forEach(it=>{
+    const here=it.p[bi];
+    let alt=null;
+    it.p.forEach((v,i)=>{
+      if(v==null||i===bi) return;
+      if(!alt||v<alt.price) alt={price:v, chain:DATA.chains[i].n};
+    });
     const row=document.createElement("div");
-    if(l.here==null){
+    if(here==null){
+      const cheapest=it.p.indexOf(it.lo);
       row.className="ln miss";
-      row.innerHTML=`<span class="ic">–</span><span class="nm"></span>
-        <span class="amt">${nis(l.it.lo)}</span>`;
-      row.querySelector(".nm").textContent=l.it.n;
-      const a=document.createElement("span"); a.className="alt";
-      a.style.color="var(--muted)";
-      a.innerHTML=`לא נמכר ב${best.name}. המחיר הוא של <b>${l.bestOther?l.bestOther.chain:"הרשת הזולה"}</b>, `+
-                  `ותצטרכו לקנות אותו שם.`;
+      row.innerHTML=`<span class="ic">→</span><span class="nm"></span><span class="amt">${nis(it.lo)}</span>`;
+      row.querySelector(".nm").textContent=it.n;
+      const a=document.createElement("span"); a.className="alt"; a.style.color="var(--muted)";
+      a.innerHTML=`לא נמכר ב${best.name}. הכי זול ב<b>${DATA.chains[cheapest]?.n||""}</b>.`;
       row.appendChild(a);
     }else{
-      row.className="ln"+(l.over>0?" over":"");
-      row.innerHTML=`<span class="ic">${l.over>0?"⚠":"✓"}</span>
-        <span class="nm"></span><span class="amt">${nis(l.here)}</span>`;
-      row.querySelector(".nm").textContent=l.it.n;
-      if(l.over>0){
+      const gap=(alt && alt.price<here-0.005) ? here-alt.price : 0;
+      if(gap>0){ over+=gap; overN++; }
+      row.className="ln"+(gap>0?" over":"");
+      row.innerHTML=`<span class="ic">${gap>0?"⚠":"✓"}</span><span class="nm"></span>
+        <span class="amt">${nis(here)}</span>`;
+      row.querySelector(".nm").textContent=it.n;
+      if(gap>0){
         const a=document.createElement("span"); a.className="alt";
-        a.innerHTML=`ב<b>${l.bestOther.chain}</b> עולה ${nis(l.bestOther.price)}, `+
-                    `חריגה של <b>${nis(l.over)}</b>`;
+        a.innerHTML=`ב<b>${alt.chain}</b> עולה ${nis(alt.price)}, חריגה של <b>${nis(gap)}</b>`;
         row.appendChild(a);
       }
     }
@@ -546,63 +540,38 @@ function renderResult(){
   sec.appendChild(ls);
 
   const bar=document.createElement("div"); bar.className="totbar";
-  bar.innerHTML=`<span>סה״כ ב${best.name}</span><b>${nis(best.sum)}</b>`;
+  bar.innerHTML=`<span>סה״כ לסל השלם</span><b>${nis(best.total)}</b>`;
   sec.appendChild(bar);
 
-  if(totalOver>0.005){
+  if(over>0.005){
     const n=document.createElement("div"); n.className="overnote";
-    n.innerHTML=`${lines.filter(l=>l.over>0).length} מוצרים זולים יותר ברשת אחרת. `+
-      `קנייה של הכל ב${best.name} עולה <b>${nis(totalOver)}</b> יותר מהמחיר הנמוך ביותר האפשרי `+
-      `(<b>${nis(best.sum-totalOver)}</b>), אבל דורשת מעבר בין חנויות.`;
+    n.innerHTML=`${overN} מוצרים זולים יותר ברשת אחרת. פיצול מלא של הקנייה `+
+      `היה חוסך עוד <b>${nis(over)}</b>, אבל דורש מעבר בין עוד חנויות.`;
     sec.appendChild(n);
   }
 
   const t2=document.createElement("div"); t2.className="secttl";
-  t2.innerHTML=`עלות הסל בכל רשת<br><span style="font-family:Assistant,sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);line-height:1.5">רשת שלא מוכרת את כל הסל מוצגת עם סכום קטן יותר כי היא מוכרת פחות פריטים. ההשוואה שמתחתיה היא על המוצרים המשותפים בלבד.</span>`;
+  t2.innerHTML=`עלות הסל השלם בכל רשת<br><span style="font-family:Assistant,sans-serif;font-weight:400;font-size:12.5px;color:var(--muted);line-height:1.5">הסכום הוא תמיד על כל ${items.length} המוצרים. מוצר שהרשת לא מוכרת נספר לפי המחיר הזול ביותר במקום אחר, ולכן כל השורות ניתנות להשוואה ישירה.</span>`;
   sec.appendChild(t2);
-  // הפרש בין סכומים של סלים שונים הוא מספר חסר משמעות: רשת שמוכרת שלושה
-  // מוצרים תמיד תיראה זולה מרשת שמוכרת שבעה. לכן כל רשת מושווית למנצחת
-  // על הפריטים ששתיהן מוכרות, וזה ההפרש שמוצג.
-  ranked.forEach(t=>{
-    let mine=0, atBest=0, n=0;
-    items.forEach(it=>{
-      const v=it.p[t.i], b=it.p[bi];
-      if(v!=null && b!=null){ mine+=v; atBest+=b; n++; }
-    });
-    t.mine=mine; t.atBest=atBest; t.shared=n;
-  });
 
-  const shown= showAllChains ? ranked : ranked.slice(0,6);
   const rl=document.createElement("div");
-  shown.forEach((t,i)=>{
+  ranked.forEach((t,i)=>{
     const r=document.createElement("div");
     r.className="rk"+(i===0?" first":"");
-    let note="";
-    if(i>0 && t.shared>0){
-      const d=t.mine-t.atBest;
-      const same=t.shared===items.length;
-      const scope=same?"":` על ${t.shared} המוצרים המשותפים`;
-      note = Math.abs(d)<0.005
-        ? `<span class="diff">אותו מחיר${scope}</span>`
-        : `<span class="diff">${d>0?"יקר ב-":"זול ב-"}${nis(Math.abs(d))}${scope}</span>`;
-    }
-    const gap = t.missing ? `<span class="gap">${t.have} מתוך ${items.length}</span>` : "";
+    const diff = i>0 ? `<span class="diff">+${nis(t.total-best.total)}</span>` : "";
+    const gap  = t.missing
+      ? `<span class="gap">${t.have} שם, ${t.missing} במקום אחר</span>`
+      : `<span class="gap">הכל בעצירה אחת</span>`;
     r.innerHTML=`<span class="pos">${i+1}</span><span class="nm"></span>
-      <span class="amt">${nis(t.sum)}</span>`;
+      <span class="amt">${nis(t.total)}</span>`;
     const nm=r.querySelector(".nm"); nm.textContent=t.name;
-    if(gap) nm.insertAdjacentHTML("beforeend",gap);
-    if(note) nm.insertAdjacentHTML("beforeend","<br>"+note);
+    nm.insertAdjacentHTML("beforeend","<br>"+gap+(diff?" "+diff:""));
     rl.appendChild(r);
   });
   sec.appendChild(rl);
-  if(ranked.length>5){
-    const b=document.createElement("button"); b.className="showall"; b.type="button";
-    b.textContent= showAllChains ? "הצג פחות" : `הצג את כל ${ranked.length} הרשתות`;
-    b.addEventListener("click",()=>{ showAllChains=!showAllChains; renderResult(); });
-    sec.appendChild(b);
-  }
   box.appendChild(sec);
 }
+
 
 /* ---------- single product mode ---------- */
 document.getElementById("qf").addEventListener("input",e=>termF(e.target.value));
