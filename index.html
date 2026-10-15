@@ -33,6 +33,7 @@
   --accent:#0B5D4A; --accent-soft:#E2EFE9;
   --cheap:#0F7355; --cheap-bg:#E4F2EA;
   --dear:#9C3B2B;  --dear-bg:#F8EBE7;
+  --warn:#8A6A12;
   --shadow:0 1px 2px rgba(22,29,25,.05), 0 10px 28px -20px rgba(22,29,25,.3);
 }
 @media (prefers-color-scheme:dark){
@@ -43,6 +44,7 @@
     --accent:#56C39C; --accent-soft:#17302A;
     --cheap:#56C39C; --cheap-bg:#17302A;
     --dear:#E2886F;  --dear-bg:#31211C;
+    --warn:#D2AC4A;
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
   }
 }
@@ -53,97 +55,133 @@
   --accent:#56C39C; --accent-soft:#17302A;
   --cheap:#56C39C; --cheap-bg:#17302A;
   --dear:#E2886F;  --dear-bg:#31211C;
+  --warn:#D2AC4A;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
 }
-
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--ground); color:var(--ink);
   font-family:"Assistant","Segoe UI",system-ui,sans-serif;
   font-size:15px; line-height:1.5; direction:rtl; -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:720px; margin:0 auto; padding:20px 16px 60px}
-
-header{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:16px}
-h1{
-  font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:900; margin:0;
-  font-size:clamp(25px,5vw,34px); line-height:1.05; letter-spacing:-.01em;
-}
-.sub{color:var(--muted); font-size:13px; margin-top:4px}
-.themer{
-  border:1px solid var(--line); background:var(--surface); color:var(--muted);
-  border-radius:999px; padding:6px 13px; font:inherit; font-size:12.5px; cursor:pointer; white-space:nowrap;
-}
+.wrap{max-width:720px; margin:0 auto; padding:18px 16px 60px}
+header{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:14px}
+h1{font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:900; margin:0;
+   font-size:clamp(24px,5vw,32px); line-height:1.05; letter-spacing:-.01em}
+.sub{color:var(--muted); font-size:12.5px; margin-top:3px}
+.themer{border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  border-radius:999px; padding:6px 13px; font:inherit; font-size:12.5px; cursor:pointer; white-space:nowrap}
 .themer:hover{border-color:var(--accent); color:var(--accent)}
 
-/* search */
-.searchbar{position:relative; margin-bottom:10px}
-#q{
-  width:100%; border:1px solid var(--line); background:var(--surface); color:var(--ink);
-  border-radius:11px; padding:14px 46px 14px 14px; font:inherit; font-size:17px; box-shadow:var(--shadow);
-}
-#q::placeholder{color:var(--muted); font-size:15px}
-.searchbar::before{
-  content:"⌕"; position:absolute; inset-inline-end:15px; top:50%; transform:translateY(-54%);
-  color:var(--muted); font-size:21px; pointer-events:none;
-}
-.quick{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px}
-.quick button{
-  border:1px solid var(--line); background:var(--chip); color:var(--ink-2);
-  border-radius:999px; padding:6px 13px; font:inherit; font-size:13px; cursor:pointer;
-}
+/* ---- verdict: where the whole basket is cheapest ---- */
+.verdict{background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow); overflow:hidden; margin-bottom:16px}
+.verdict .top{padding:16px 18px 13px; border-bottom:1px solid var(--line-2)}
+.verdict .cap{font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--muted); font-weight:700}
+.winner{display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  flex-wrap:wrap; margin-top:7px}
+.winner .nm{font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:900;
+  font-size:clamp(21px,4.6vw,28px); color:var(--cheap); line-height:1.1}
+.winner .amt{font-size:clamp(21px,4.6vw,28px); font-weight:700; color:var(--cheap);
+  font-variant-numeric:tabular-nums; white-space:nowrap}
+.saveline{margin-top:8px; font-size:13.5px; color:var(--ink-2)}
+.saveline b{color:var(--cheap); font-variant-numeric:tabular-nums}
+
+.ranking{padding:4px 0 6px}
+.rk{display:grid; grid-template-columns:26px 1fr auto; gap:10px; align-items:center;
+  padding:8px 18px; font-size:14px}
+.rk + .rk{border-top:1px solid var(--line-2)}
+.rk .pos{color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums}
+.rk .nm{color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.rk .amt{font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+.rk .diff{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; margin-inline-start:7px}
+.rk.first{background:var(--cheap-bg)}
+.rk.first .nm{font-weight:700; color:var(--ink)}
+.rk.first .amt{color:var(--cheap)}
+.rk.partial .nm{color:var(--muted)}
+.gap-note{font-size:11.5px; color:var(--warn); white-space:nowrap; margin-inline-start:6px}
+.showall{width:100%; border:0; border-top:1px solid var(--line-2); background:none;
+  color:var(--accent); font:inherit; font-size:13px; font-weight:600; padding:10px; cursor:pointer}
+.showall:hover{background:var(--chip)}
+
+/* ---- add products ---- */
+.adder{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  box-shadow:var(--shadow); padding:14px 16px; margin-bottom:16px}
+.adder h2{font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:700; font-size:17px; margin:0 0 10px}
+.searchbar{position:relative}
+#q{width:100%; border:1px solid var(--line); background:var(--ground); color:var(--ink);
+  border-radius:10px; padding:12px 42px 12px 12px; font:inherit; font-size:16px}
+#q::placeholder{color:var(--muted); font-size:14.5px}
+.searchbar::before{content:"⌕"; position:absolute; inset-inline-end:14px; top:50%;
+  transform:translateY(-54%); color:var(--muted); font-size:20px; pointer-events:none}
+.quick{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.quick button{border:1px solid var(--line); background:var(--chip); color:var(--ink-2);
+  border-radius:999px; padding:5px 12px; font:inherit; font-size:12.5px; cursor:pointer}
 .quick button:hover{border-color:var(--accent); color:var(--accent)}
-.count{font-size:13px; color:var(--muted); margin-bottom:12px}
+.results{margin-top:10px; display:flex; flex-direction:column; gap:1px;
+  background:var(--line-2); border:1px solid var(--line-2); border-radius:9px; overflow:hidden}
+.results:empty{display:none}
+.res{display:grid; grid-template-columns:1fr auto 32px; gap:10px; align-items:center;
+  background:var(--surface); padding:9px 12px; font-size:14px}
+.res .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.res .pr{font-variant-numeric:tabular-nums; font-size:13px; color:var(--muted); white-space:nowrap}
+.res .pr b{color:var(--cheap)}
+.res button{width:32px; height:32px; border-radius:8px; border:1px solid var(--line);
+  background:var(--ground); color:var(--accent); font-size:19px; line-height:1; cursor:pointer}
+.res button:hover{background:var(--accent); border-color:var(--accent); color:#fff}
+.res.have button{background:var(--accent); border-color:var(--accent); color:#fff; cursor:default}
+.hint{font-size:12.5px; color:var(--muted); margin-top:9px}
 
-/* one product = one card holding every branch, cheapest first */
-.cards{display:flex; flex-direction:column; gap:16px}
-.card{background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); overflow:hidden}
-.card > h2{
-  font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:700; font-size:18px;
-  margin:0; padding:14px 16px 11px; line-height:1.3; text-wrap:balance;
-}
-.card .sumline{
-  padding:0 16px 12px; margin-top:-4px; font-size:13px; color:var(--muted);
-  display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline;
-}
-.card .sumline b{color:var(--cheap); font-weight:700; font-variant-numeric:tabular-nums}
-
+/* ---- basket items ---- */
+.secttl{font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:700; font-size:17px;
+  margin:0 0 11px; display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.secttl .clear{font-family:inherit; font-size:12.5px; font-weight:600; color:var(--muted);
+  background:none; border:0; cursor:pointer; padding:0}
+.secttl .clear:hover{color:var(--dear)}
+.cards{display:flex; flex-direction:column; gap:14px}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  box-shadow:var(--shadow); overflow:hidden}
+.card > .hd{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+  padding:13px 15px 10px}
+.card h3{font-family:"Frank Ruhl Libre",Georgia,serif; font-weight:700; font-size:16.5px;
+  margin:0; line-height:1.3; text-wrap:balance}
+.card .rm{border:1px solid var(--line); background:var(--ground); color:var(--muted);
+  border-radius:7px; width:28px; height:28px; font-size:14px; line-height:1; cursor:pointer; flex:none}
+.card .rm:hover{border-color:var(--dear); color:var(--dear)}
 table{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums}
 tbody tr{border-top:1px solid var(--line-2)}
 tbody tr.best{background:var(--cheap-bg)}
 tbody tr.worst{background:var(--dear-bg)}
-td{padding:9px 16px; vertical-align:middle}
-td.rank{width:30px; color:var(--muted); font-size:12.5px; padding-inline-end:0}
-td.store{font-size:14.5px; color:var(--ink-2)}
+td{padding:8px 15px; vertical-align:middle}
+td.rank{width:28px; color:var(--muted); font-size:12px; padding-inline-end:0}
+td.store{font-size:14px; color:var(--ink-2)}
 tr.best td.store{font-weight:700; color:var(--ink)}
-td.price{text-align:end; white-space:nowrap; font-weight:700; font-size:16px; width:92px}
-tr.best  td.price{color:var(--cheap)}
+td.price{text-align:end; white-space:nowrap; font-weight:700; font-size:15.5px; width:88px}
+tr.best td.price{color:var(--cheap)}
 tr.worst td.price{color:var(--dear)}
-td.extra{text-align:end; white-space:nowrap; font-size:12.5px; color:var(--muted); width:78px; padding-inline-start:0}
+td.extra{text-align:end; white-space:nowrap; font-size:12px; color:var(--muted); width:72px; padding-inline-start:0}
 tr.best td.extra{color:var(--cheap); font-weight:700}
-
-.tagline{
-  display:inline-block; font-size:11px; font-weight:700; letter-spacing:.04em;
-  padding:1px 7px; border-radius:999px; margin-inline-start:7px; vertical-align:1px;
-}
-tr.best  .tagline{background:var(--cheap); color:#fff}
-tr.worst .tagline{background:var(--dear);  color:#fff}
-
-.more{
-  width:100%; border:0; border-top:1px solid var(--line-2); background:none;
-  color:var(--accent); font:inherit; font-size:13px; font-weight:600;
-  padding:10px; cursor:pointer;
-}
+.tag{display:inline-block; font-size:10.5px; font-weight:700; padding:1px 6px;
+  border-radius:999px; margin-inline-start:6px; vertical-align:1px}
+tr.worst .tag{background:var(--dear); color:#fff}
+.more{width:100%; border:0; border-top:1px solid var(--line-2); background:none;
+  color:var(--accent); font:inherit; font-size:12.5px; font-weight:600; padding:9px; cursor:pointer}
 .more:hover{background:var(--chip)}
-.empty{text-align:center; color:var(--muted); padding:50px 20px; font-size:14px; line-height:1.7}
-.foot{margin-top:30px; padding-top:14px; border-top:1px solid var(--line-2); font-size:12px; color:var(--muted); line-height:1.65}
+.empty{text-align:center; color:var(--muted); padding:34px 20px; font-size:14px; line-height:1.75;
+  background:var(--surface); border:1px dashed var(--line); border-radius:12px}
+.foot{margin-top:26px; padding-top:13px; border-top:1px solid var(--line-2);
+  font-size:11.5px; color:var(--muted); line-height:1.65}
+.toast{position:fixed; inset-inline:0; bottom:18px; margin:auto; width:max-content; max-width:88vw;
+  background:var(--ink); color:var(--ground); padding:9px 17px; border-radius:999px;
+  font-size:13px; font-weight:600; opacity:0; transition:opacity .22s; pointer-events:none; z-index:9}
+.toast.on{opacity:1}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (max-width:460px){
-  td{padding:9px 12px}
-  td.extra{display:none}
-  .card > h2{font-size:17px; padding:13px 12px 10px}
-  .card .sumline{padding:0 12px 11px}
+  td{padding:8px 12px} td.extra{display:none}
+  .rk{padding:8px 13px} .verdict .top{padding:14px 13px 12px}
+  .card > .hd{padding:12px 12px 9px}
 }
 </style>
 
@@ -156,149 +194,245 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
     <button class="themer" id="themer" type="button">מצב תצוגה</button>
   </header>
 
-  <div class="searchbar">
-    <input id="q" type="search" placeholder="מה אתם מחפשים? קוטג׳, עוף, קולה…" autocomplete="off" enterkeyhint="search">
-  </div>
-  <div class="quick" id="quick"></div>
-  <div class="count" id="count">טוען…</div>
+  <section class="verdict" id="verdict" hidden></section>
+
+  <section class="adder">
+    <h2>הוספת מוצרים לסל</h2>
+    <div class="searchbar">
+      <input id="q" type="search" placeholder="חלב, ביצים, קוטג׳, מרכך כביסה…" autocomplete="off" enterkeyhint="search">
+    </div>
+    <div class="quick" id="quick"></div>
+    <div class="results" id="results"></div>
+    <p class="hint" id="hint">חפשו מוצר ולחצו <b>+</b> כדי להכניס אותו לסל. החישוב מתעדכן מיד.</p>
+  </section>
+
+  <h2 class="secttl">
+    <span>המוצרים בסל <span id="cnt" style="color:var(--muted);font-weight:400"></span></span>
+    <button class="clear" id="clear" type="button" hidden>רוקן סל</button>
+  </h2>
   <div class="cards" id="cards"></div>
 
   <p class="foot">
     המחירים מגיעים מקבצי שקיפות המחירים שרשתות המזון מחויבות לפרסם בחוק, ומתעדכנים כל שעה.
-    מוצג רק מה שנמכר בלפחות 8 סניפים, כדי שההשוואה תהיה הוגנת.
+    הסל נשמר במכשיר שלכם בלבד.
   </p>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
-const LSTH = "salHadera.theme.v1";
-let DATA = null;
-const TOP = 8;          // כמה מוצרים מציגים בבת אחת
-const SHOW = 6;         // כמה סניפים גלויים בכל מוצר לפני "הצג הכל"
-const openAll = new Set();
+const LS="salHadera.basket.v2", LSTH="salHadera.theme.v1";
+let DATA=null, BASKET=load(), openRows=new Set(), showAllStores=false;
+const SHOW=5;   // סניפים גלויים לכל מוצר לפני "הצג הכל"
+
+function load(){ try{ return JSON.parse(localStorage.getItem(LS))||[]; }catch(e){ return []; } }
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(BASKET)); }catch(e){} }
 
 (function(){
-  let t=null; try{ t=localStorage.getItem(LSTH);}catch(e){}
+  let t=null; try{ t=localStorage.getItem(LSTH); }catch(e){}
   if(t) document.documentElement.setAttribute("data-theme",t);
   document.getElementById("themer").addEventListener("click",()=>{
     const cur=document.documentElement.getAttribute("data-theme");
     const next=cur==="dark"?"light":"dark";
     document.documentElement.setAttribute("data-theme",next);
-    try{localStorage.setItem(LSTH,next);}catch(e){}
+    try{ localStorage.setItem(LSTH,next); }catch(e){}
   });
 })();
 
-const nis = n => n.toLocaleString("he-IL",{minimumFractionDigits:2,maximumFractionDigits:2}) + " ₪";
+const nis=n=>n.toLocaleString("he-IL",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₪";
+let tT; function toast(m){
+  const e=document.getElementById("toast");
+  e.textContent=m; e.classList.add("on");
+  clearTimeout(tT); tT=setTimeout(()=>e.classList.remove("on"),2000);
+}
 
 fetch("data.json").then(r=>r.json()).then(d=>{
   DATA=d;
   document.getElementById("nStores").textContent=d.stores.length;
   document.getElementById("gen").textContent=d.generated;
-  buildQuick();
-  render("");
+  buildQuick(); renderAll();
 }).catch(()=>{
-  document.getElementById("count").textContent="לא הצלחתי לטעון את המחירים. נסו לרענן.";
+  document.getElementById("hint").textContent="לא הצלחתי לטעון את המחירים. נסו לרענן.";
 });
 
-const QUICK=["קוטג","חלב","גבינה","יוגורט","עוף","שניצל","קולה","מים","שמן","אורז","קפה","נייר טואלט","שמפו","כביסה"];
+const QUICK=["חלב","ביצים","קוטג","גבינה","יוגורט","לחם","שמן","אורז","פסטה","קפה",
+             "סוכר","קורנפלקס","במבה","ביסלי","מרכך כביסה","אבקת כביסה","נייר טואלט","שמפו"];
 function buildQuick(){
-  const host=document.getElementById("quick");
+  const h=document.getElementById("quick");
   QUICK.forEach(w=>{
     const b=document.createElement("button"); b.type="button"; b.textContent=w;
-    b.addEventListener("click",()=>{
-      const q=document.getElementById("q"); q.value=w; render(w); q.blur();
-      scrollTo({top:0,behavior:"smooth"});
-    });
-    host.appendChild(b);
+    b.addEventListener("click",()=>{ const q=document.getElementById("q"); q.value=w; search(w); });
+    h.appendChild(b);
   });
 }
-document.getElementById("q").addEventListener("input",e=>{ openAll.clear(); render(e.target.value); });
+document.getElementById("q").addEventListener("input",e=>search(e.target.value));
 
-function render(term){
-  if(!DATA) return;
+function itemByCode(b){ return DATA.items.find(x=>x.b===b); }
+
+function search(term){
   const t=(term||"").trim();
-  const cards=document.getElementById("cards");
-  const countEl=document.getElementById("count");
-  let list;
-  if(!t){
-    list=DATA.items.slice(0,TOP);
-    countEl.textContent="המוצרים שבהם הפער בין הסניפים הוא הגדול ביותר. חפשו למעלה כדי לראות מוצר מסוים.";
-  }else{
-    list=DATA.items.filter(it=>it.n.includes(t)).slice(0,TOP);
-    const all=DATA.items.filter(it=>it.n.includes(t)).length;
-    countEl.textContent = all
-      ? `נמצאו ${all} מוצרים עבור "${t}"${all>TOP?`, מוצגים ${TOP} הראשונים`:""}`
-      : `לא נמצא מוצר בשם "${t}"`;
-  }
-  cards.innerHTML="";
-  if(!list.length){
-    cards.innerHTML='<div class="empty">לא נמצא מוצר בשם הזה.<br>נסו מילה אחת בלבד, למשל <b>קוטג</b> במקום <b>קוטג\' 5 אחוז</b>.</div>';
+  const host=document.getElementById("results");
+  host.innerHTML="";
+  if(t.length<2){ document.getElementById("hint").hidden=false; return; }
+  const hits=DATA.items.filter(x=>x.n.includes(t)).slice(0,10);
+  document.getElementById("hint").hidden = hits.length>0;
+  if(!hits.length){
+    document.getElementById("hint").hidden=false;
+    document.getElementById("hint").innerHTML=`לא נמצא מוצר בשם "<b>${t}</b>". נסו מילה אחת בלבד.`;
     return;
   }
-  const frag=document.createDocumentFragment();
-  list.forEach(it=>frag.appendChild(cardFor(it)));
-  cards.appendChild(frag);
+  hits.forEach(it=>{
+    const have=BASKET.includes(it.b);
+    const row=document.createElement("div");
+    row.className="res"+(have?" have":"");
+    row.innerHTML=`<span class="nm"></span>
+      <span class="pr">מ־<b>${nis(it.lo)}</b></span>
+      <button type="button" aria-label="הוסף לסל">${have?"✓":"+"}</button>`;
+    row.querySelector(".nm").textContent=it.n;
+    row.querySelector("button").addEventListener("click",()=>{
+      if(BASKET.includes(it.b)) return;
+      BASKET.push(it.b); save(); renderAll();
+      search(document.getElementById("q").value);
+      toast("נוסף לסל");
+    });
+    host.appendChild(row);
+  });
+}
+
+/* ---- the whole point: what the basket costs at every branch ---- */
+function basketTotals(){
+  const items=BASKET.map(itemByCode).filter(Boolean);
+  return DATA.stores.map((s,i)=>{
+    let sum=0, missing=0;
+    items.forEach(it=>{
+      const v=it.p[i];
+      if(v==null) missing++; else sum+=v;
+    });
+    return {name:s.n, sum, missing, have:items.length-missing};
+  }).filter(t=>t.have>0);
+}
+
+function renderVerdict(){
+  const box=document.getElementById("verdict");
+  const items=BASKET.map(itemByCode).filter(Boolean);
+  if(!items.length){ box.hidden=true; return; }
+  box.hidden=false;
+
+  const totals=basketTotals();
+  // סניף שחסרים בו מוצרים אינו בר-השוואה מול סניף מלא: הסכום שלו נמוך
+  // רק מפני שלא הכל נספר. לכן מדרגים את המלאים, והחלקיים מוצגים אחריהם.
+  const full=totals.filter(t=>t.missing===0).sort((a,b)=>a.sum-b.sum);
+  const part=totals.filter(t=>t.missing>0).sort((a,b)=>b.have-a.have||a.sum-b.sum);
+  const ranked=[...full,...part];
+
+  if(!full.length){
+    box.innerHTML=`<div class="top">
+      <div class="cap">הסל שלך</div>
+      <p style="margin:8px 0 0;font-size:14px;color:var(--ink-2);line-height:1.6">
+        אין סניף יחיד שמוכר את כל ${items.length} המוצרים שבחרתם.
+        למטה מוצגים הסניפים לפי כמה מהסל יש בהם.</p></div>`;
+  }else{
+    const best=full[0], worst=full[full.length-1];
+    const med=full[Math.floor(full.length/2)];
+    box.innerHTML=`<div class="top">
+      <div class="cap">הסל הזה הכי זול ב</div>
+      <div class="winner">
+        <span class="nm"></span><span class="amt">${nis(best.sum)}</span>
+      </div>
+      <div class="saveline">
+        חוסך <b>${nis(med.sum-best.sum)}</b> לעומת סניף ממוצע,
+        ו<b>${nis(worst.sum-best.sum)}</b> לעומת היקר ביותר.
+      </div></div>`;
+    box.querySelector(".winner .nm").textContent=best.name;
+  }
+
+  const list=document.createElement("div");
+  list.className="ranking";
+  const shown = showAllStores ? ranked : ranked.slice(0,5);
+  const base = full.length ? full[0].sum : null;
+  shown.forEach((t,i)=>{
+    const r=document.createElement("div");
+    r.className="rk"+(i===0&&t.missing===0?" first":"")+(t.missing?" partial":"");
+    const diff = (base!=null && t.missing===0 && i>0) ? `<span class="diff">+${nis(t.sum-base)}</span>` : "";
+    const gap  = t.missing ? `<span class="gap-note">${t.missing} לא נמכרים כאן</span>` : "";
+    r.innerHTML=`<span class="pos">${i+1}</span>
+      <span class="nm"></span>
+      <span class="amt">${nis(t.sum)}${diff}</span>`;
+    const nm=r.querySelector(".nm"); nm.textContent=t.name;
+    if(gap) nm.insertAdjacentHTML("beforeend",gap);
+    list.appendChild(r);
+  });
+  box.appendChild(list);
+
+  if(ranked.length>5){
+    const b=document.createElement("button");
+    b.className="showall"; b.type="button";
+    b.textContent= showAllStores ? "הצג פחות" : `הצג את כל ${ranked.length} הסניפים`;
+    b.addEventListener("click",()=>{ showAllStores=!showAllStores; renderVerdict(); });
+    box.appendChild(b);
+  }
+}
+
+function renderCards(){
+  const host=document.getElementById("cards");
+  const items=BASKET.map(itemByCode).filter(Boolean);
+  document.getElementById("cnt").textContent = items.length ? `(${items.length})` : "";
+  document.getElementById("clear").hidden = !items.length;
+  host.innerHTML="";
+  if(!items.length){
+    host.innerHTML=`<div class="empty">
+      הסל ריק.<br>הוסיפו מוצרים למעלה, ומיד תראו כמה הסל שלכם עולה בכל סניף בחדרה.</div>`;
+    return;
+  }
+  items.forEach(it=>host.appendChild(cardFor(it)));
 }
 
 function cardFor(it){
-  // כל הסניפים שמוכרים את המוצר, מהזול ליקר. זו כל התצוגה.
-  const rows = it.p.map((v,i)=>({price:v, store:DATA.stores[i].n}))
-                   .filter(r=>r.price!=null)
-                   .sort((a,b)=>a.price-b.price);
+  const rows=it.p.map((v,i)=>({price:v,store:DATA.stores[i].n}))
+                 .filter(r=>r.price!=null).sort((a,b)=>a.price-b.price);
   const lo=rows[0].price, hi=rows[rows.length-1].price;
-  const open = openAll.has(it.b);
-  const shown = open ? rows : rows.slice(0, SHOW);
+  const open=openRows.has(it.b);
+  const shown=open?rows:rows.slice(0,SHOW);
 
-  const card=document.createElement("div");
-  card.className="card";
+  const card=document.createElement("div"); card.className="card";
+  const hd=document.createElement("div"); hd.className="hd";
+  hd.innerHTML=`<h3></h3><button class="rm" type="button" aria-label="הסר מהסל">✕</button>`;
+  hd.querySelector("h3").textContent=it.n;
+  hd.querySelector(".rm").addEventListener("click",()=>{
+    BASKET=BASKET.filter(b=>b!==it.b); save(); renderAll();
+    search(document.getElementById("q").value); toast("הוסר מהסל");
+  });
+  card.appendChild(hd);
 
-  const h=document.createElement("h2");
-  h.textContent=it.n;
-  card.appendChild(h);
-
-  const sum=document.createElement("div");
-  sum.className="sumline";
-  const save=hi-lo;
-  sum.innerHTML = `<span>הכי זול ב<b>${rows[0].store}</b></span>` +
-                  `<span>חוסך <b>${nis(save)}</b> לעומת היקר ביותר</span>` +
-                  `<span>${rows.length} סניפים</span>`;
-  card.appendChild(sum);
-
-  const tbl=document.createElement("table");
-  const tb=document.createElement("tbody");
+  const tbl=document.createElement("table"); const tb=document.createElement("tbody");
   shown.forEach((r,i)=>{
+    const isBest=r.price===lo, isWorst=r.price===hi&&!isBest;
     const tr=document.createElement("tr");
-    const isBest = r.price===lo, isWorst = r.price===hi && !isBest;
-    if(isBest) tr.className="best";
-    else if(isWorst) tr.className="worst";
-    const diff = r.price-lo;
-    tr.innerHTML=
-      `<td class="rank">${i+1}</td>` +
-      `<td class="store"></td>` +
-      `<td class="price">${nis(r.price)}</td>` +
-      `<td class="extra">${isBest ? "הכי זול" : "+"+nis(diff)}</td>`;
-    tr.querySelector(".store").textContent=r.store;
-    if(isWorst){
-      const tag=document.createElement("span");
-      tag.className="tagline"; tag.textContent="הכי יקר";
-      tr.querySelector(".store").appendChild(tag);
-    }
+    tr.className=isBest?"best":(isWorst?"worst":"");
+    tr.innerHTML=`<td class="rank">${i+1}</td><td class="store"></td>
+      <td class="price">${nis(r.price)}</td>
+      <td class="extra">${isBest?"הכי זול":"+"+nis(r.price-lo)}</td>`;
+    const st=tr.querySelector(".store"); st.textContent=r.store;
+    if(isWorst) st.insertAdjacentHTML("beforeend",'<span class="tag">הכי יקר</span>');
     tb.appendChild(tr);
   });
-  tbl.appendChild(tb);
-  card.appendChild(tbl);
+  tbl.appendChild(tb); card.appendChild(tbl);
 
   if(rows.length>SHOW){
-    const btn=document.createElement("button");
-    btn.className="more"; btn.type="button";
-    btn.textContent = open ? "הצג פחות" : `הצג את כל ${rows.length} הסניפים`;
-    btn.addEventListener("click",()=>{
-      open ? openAll.delete(it.b) : openAll.add(it.b);
-      render(document.getElementById("q").value);
-    });
-    card.appendChild(btn);
+    const b=document.createElement("button"); b.className="more"; b.type="button";
+    b.textContent=open?"הצג פחות":`הצג את כל ${rows.length} הסניפים`;
+    b.addEventListener("click",()=>{ open?openRows.delete(it.b):openRows.add(it.b); renderCards(); });
+    card.appendChild(b);
   }
   return card;
 }
+
+function renderAll(){ renderVerdict(); renderCards(); }
+
+document.getElementById("clear").addEventListener("click",()=>{
+  if(!BASKET.length) return;
+  BASKET=[]; openRows.clear(); showAllStores=false; save(); renderAll();
+  search(document.getElementById("q").value); toast("הסל רוקן");
+});
 </script>
 
 <div id="installBar" hidden style="
