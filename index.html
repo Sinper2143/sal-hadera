@@ -356,9 +356,12 @@ const ic=c=>'<svg class="ic-sv" viewBox="0 0 24 24" fill="none" stroke="currentC
 const thumb=(it,size)=>{
   const s=size||38;
   if(it.img){
+    // התמונות מאוחסנות אצלנו כריבוע 160 על 160, ולכן אין צורך לחשוש
+    // ליחס גובה-רוחב. onerror מחליף באייקון אם קובץ חסר, כך ששום פריט
+    // לא נשאר עם ריבוע שבור.
     return `<span class="th" style="--th:${s}px">`+
-           `<img src="${it.img}" alt="" loading="lazy" decoding="async" `+
-           `onerror="this.parentNode.innerHTML=window.__icHTML('${it.i}')">`+
+           `<img src="img/${it.b}.webp" alt="" loading="lazy" decoding="async" `+
+           `onerror="this.parentNode.classList.add('th-ic');this.parentNode.innerHTML=window.__icHTML('${it.i}')">`+
            `</span>`;
   }
   return `<span class="th th-ic" style="--th:${s}px">${ic(it.i)}</span>`;
