@@ -106,6 +106,8 @@ input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
 .sg .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .sg .pr{font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--muted); white-space:nowrap}
 .sg .pr b{color:var(--cheap)}
+.fresh{background:var(--accent-soft); color:var(--accent); font-size:10.5px;
+  font-weight:700; padding:1px 6px; border-radius:999px; margin-inline-end:6px}
 .sg button{width:32px; height:32px; border-radius:8px; border:1px solid var(--line);
   background:var(--ground); color:var(--accent); font-size:19px; line-height:1; cursor:pointer}
 .sg button:hover{background:var(--accent); border-color:var(--accent); color:#fff}
@@ -396,7 +398,7 @@ let tT; function toast(m){
 // מספר המבנה שהקוד הזה יודע לקרוא. אם הנתונים בנויים אחרת, הדף שנטען הוא
 // גרסה ישנה ששרדה בזיכרון הדפדפן, והוא מציג שמות ריקים בלי שום שגיאה.
 // במקרה כזה מנקים הכל וטוענים מחדש, פעם אחת בלבד כדי לא להיתקע בלולאה.
-const SCHEMA = 5;
+const SCHEMA = 6;
 async function hardRefresh(){
   try{
     for(const k of await caches.keys()) await caches.delete(k);
@@ -547,6 +549,9 @@ function match(term){
     if(tier>=0) buckets[tier].push(it);
     if(buckets[0].length+buckets[1].length>80) break;
   }
+  // בתוך כל רמה, מוצר טרי קודם. מי שמחפש "עגבניה" מתכוון לעגבנייה,
+  // לא לרוטב עגבניות, גם אם הרוטב נמכר ביותר רשתות.
+  buckets.forEach(b=>b.sort((x,y)=>(y.f||0)-(x.f||0)));
   return [...buckets[0],...buckets[1],...buckets[2],...buckets[3]];
 }
 
@@ -583,7 +588,7 @@ function termB(term){
     const have=BASKET.includes(it.b);
     const r=document.createElement("div"); r.className="sg"+(have?" have":"");
     r.innerHTML=`${thumb(it,40)}<span class="nm"></span>
-      <span class="pr">מ־<b>${nis(it.lo)}</b></span>
+      <span class="pr">${it.f?'<span class="fresh">טרי</span>':''}מ־<b>${nis(it.lo)}</b></span>
       <button type="button" aria-label="הוסף">${have?"✓":"+"}</button>`;
     r.querySelector(".nm").textContent=it.n;
     r.querySelector("button").addEventListener("click",()=>{
