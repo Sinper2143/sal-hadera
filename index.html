@@ -96,7 +96,7 @@ input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
 .cat-body button{border:1px solid var(--line); background:var(--chip); color:var(--ink-2);
   border-radius:999px; padding:5px 12px; font:inherit; font-size:12.5px; cursor:pointer}
 .cat-body button:hover{border-color:var(--accent); color:var(--accent)}
-.cat-body>button.on{background:var(--accent); border-color:var(--accent); color:#fff}
+.cat-body button.on{background:var(--accent); border-color:var(--accent); color:#fff}
 .cat-body .sugg{width:100%; margin-top:10px; max-height:300px}
 .sugg{margin-top:10px; background:var(--line-2); border:1px solid var(--line-2);
   border-radius:9px; overflow:hidden; display:flex; flex-direction:column; gap:1px; max-height:330px; overflow-y:auto}
@@ -493,8 +493,7 @@ function buildQuick(){
           document.getElementById(input).value=w; fn(w);
           if(host==="quickB"){
             moveSugg(body);              // התוצאות נפתחות כאן, מתחת לכפתור
-            body.querySelectorAll(".cat-body>button").forEach(x=>
-              x.classList.toggle("on", x===b));
+            [...body.children].forEach(x=>x.classList.toggle("on", x===b));
             b.scrollIntoView({behavior:"smooth", block:"center"});
           }else{
             document.getElementById(input).scrollIntoView({behavior:"smooth",block:"center"});
@@ -516,7 +515,7 @@ function buildQuick(){
         hd.setAttribute("aria-expanded", open?"false":"true");
         hd.querySelector(".chev").textContent= open?"+":"−";
         moveSugg(null);
-        body.querySelectorAll(".cat-body>button").forEach(x=>x.classList.remove("on"));
+        [...body.children].forEach(x=>x.classList&&x.classList.remove("on"));
         if(!open) hd.scrollIntoView({behavior:"smooth",block:"nearest"});
       });
       sec.appendChild(hd); sec.appendChild(body); h.appendChild(sec);
@@ -554,7 +553,7 @@ function match(term){
 /* ---------- basket mode ---------- */
 document.getElementById("qb").addEventListener("input",e=>{
   moveSugg(null);
-  document.querySelectorAll("#quickB .cat-body>button.on").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll("#quickB .cat-body button.on").forEach(x=>x.classList.remove("on"));
   termB(e.target.value);
 });
 /* אזור התוצאות נודד: הוא נפתח בתוך הקטגוריה שנלחצה, וחוזר אל מתחת לתיבת
