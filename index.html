@@ -99,7 +99,7 @@ input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
 .sugg{margin-top:10px; background:var(--line-2); border:1px solid var(--line-2);
   border-radius:9px; overflow:hidden; display:flex; flex-direction:column; gap:1px; max-height:330px; overflow-y:auto}
 .sugg:empty{display:none}
-.sg{display:grid; grid-template-columns:26px 1fr auto 32px; gap:9px; align-items:center;
+.sg{display:grid; grid-template-columns:40px 1fr auto 32px; gap:10px; align-items:center;
   background:var(--surface); padding:9px 12px; font-size:14px}
 .sg .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .sg .pr{font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--muted); white-space:nowrap}
@@ -108,6 +108,13 @@ input[type=search]::placeholder{color:var(--muted); font-size:14.5px}
   background:var(--ground); color:var(--accent); font-size:19px; line-height:1; cursor:pointer}
 .sg button:hover{background:var(--accent); border-color:var(--accent); color:#fff}
 .sg.have button{background:var(--accent); border-color:var(--accent); color:#fff}
+.th{display:inline-flex; align-items:center; justify-content:center;
+  width:var(--th); height:var(--th); flex:none; border-radius:7px;
+  background:var(--chip); overflow:hidden}
+.th img{width:100%; height:100%; object-fit:contain; display:block; padding:2px}
+.th-ic{color:var(--accent); padding:5px}
+.th-ic svg{width:100%; height:100%}
+.ln .th{align-self:start}
 .ic-sv{width:100%; height:100%; display:block}
 .ic-w{display:inline-flex; width:22px; height:22px; color:var(--accent); flex:none; opacity:.9}
 .card h3{display:flex; align-items:center; gap:9px}
@@ -154,7 +161,7 @@ input[type=search]:disabled{opacity:.6}
 .saveline b{color:var(--cheap); font-variant-numeric:tabular-nums}
 
 .lines{padding:2px 0}
-.ln{display:grid; grid-template-columns:20px 1fr auto; gap:10px; align-items:start; padding:10px 18px}
+.ln{display:grid; grid-template-columns:34px 1fr auto; gap:11px; align-items:center; padding:10px 18px}
 .ln + .ln{border-top:1px solid var(--line-2)}
 .ln .ic{font-size:14px; line-height:1.4; color:var(--cheap)}
 .ln .nm{font-size:14.5px; line-height:1.35}
@@ -343,6 +350,21 @@ const ICONS={
 };
 const ic=c=>'<svg class="ic-sv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(ICONS[c]||ICONS.box)+'"/></svg>';
 
+/* ריבוע אחד בגודל קבוע לכל פריט, תמונה או אייקון. object-fit:contain
+   מכניס כל תמונה פנימה בלי לחתוך ובלי למתוח, ולכן יחס הגובה-רוחב
+   המקורי לא משנה: כל השורות יוצאות באותו גובה בדיוק. */
+const thumb=(it,size)=>{
+  const s=size||38;
+  if(it.img){
+    return `<span class="th" style="--th:${s}px">`+
+           `<img src="${it.img}" alt="" loading="lazy" decoding="async" `+
+           `onerror="this.parentNode.innerHTML=window.__icHTML('${it.i}')">`+
+           `</span>`;
+  }
+  return `<span class="th th-ic" style="--th:${s}px">${ic(it.i)}</span>`;
+};
+window.__icHTML=c=>ic(c);
+
 const LS="salHadera.basket.v3", LSTH="salHadera.theme.v1";
 let DATA=null, BASKET=load(), calculated=false, showAllChains=false, openCard=null;
 
@@ -369,7 +391,7 @@ let tT; function toast(m){
 // מספר המבנה שהקוד הזה יודע לקרוא. אם הנתונים בנויים אחרת, הדף שנטען הוא
 // גרסה ישנה ששרדה בזיכרון הדפדפן, והוא מציג שמות ריקים בלי שום שגיאה.
 // במקרה כזה מנקים הכל וטוענים מחדש, פעם אחת בלבד כדי לא להיתקע בלולאה.
-const SCHEMA = 4;
+const SCHEMA = 5;
 async function hardRefresh(){
   try{
     for(const k of await caches.keys()) await caches.delete(k);
@@ -533,7 +555,7 @@ function termB(term){
   hits.forEach(it=>{
     const have=BASKET.includes(it.b);
     const r=document.createElement("div"); r.className="sg"+(have?" have":"");
-    r.innerHTML=`<span class="ic-w">${ic(it.i)}</span><span class="nm"></span>
+    r.innerHTML=`${thumb(it,40)}<span class="nm"></span>
       <span class="pr">מ־<b>${nis(it.lo)}</b></span>
       <button type="button" aria-label="הוסף">${have?"✓":"+"}</button>`;
     r.querySelector(".nm").textContent=it.n;
@@ -556,7 +578,7 @@ function renderCollected(){
   const host=document.getElementById("pills"); host.innerHTML="";
   items.forEach(it=>{
     const p=document.createElement("div"); p.className="pill";
-    p.innerHTML=`<span class="ic-w">${ic(it.i)}</span><span class="pn"></span>
+    p.innerHTML=`${thumb(it,30)}<span class="pn"></span>
       <button type="button" aria-label="הסר">✕</button>`;
     p.querySelector(".pn").textContent=it.n;
     p.querySelector("button").addEventListener("click",()=>{
@@ -660,7 +682,7 @@ function renderResult(){
     if(here==null){
       const cheapest=it.p.indexOf(it.lo);
       row.className="ln miss";
-      row.innerHTML=`<span class="ic">${ic(it.i)}</span><span class="nm"></span><span class="amt">${nis(it.lo)}</span>`;
+      row.innerHTML=`${thumb(it,34)}<span class="nm"></span><span class="amt">${nis(it.lo)}</span>`;
       row.querySelector(".nm").textContent=it.n;
       const a=document.createElement("span"); a.className="alt"; a.style.color="var(--muted)";
       a.innerHTML=`לא נמכר ב${best.name}. הכי זול ב<b>${DATA.chains[cheapest]?.n||""}</b>.`;
@@ -669,7 +691,7 @@ function renderResult(){
       const gap=(alt && alt.price<here-0.005) ? here-alt.price : 0;
       if(gap>0){ over+=gap; overN++; }
       row.className="ln"+(gap>0?" over":"");
-      row.innerHTML=`<span class="ic">${ic(it.i)}</span><span class="nm"></span>
+      row.innerHTML=`${thumb(it,34)}<span class="nm"></span>
         <span class="amt">${nis(here)}</span>${gap>0?'<span class="warn-dot">⚠</span>':''}`;
       row.querySelector(".nm").textContent=it.n;
       if(gap>0){
@@ -742,7 +764,7 @@ function cardFor(it){
   const lo=rows[0].price;
   const card=document.createElement("div"); card.className="card";
   const h=document.createElement("h3");
-  h.innerHTML=`<span class="ic-w">${ic(it.i)}</span><span></span>`;
+  h.innerHTML=`${thumb(it,46)}<span></span>`;
   h.querySelector("span:last-child").textContent=it.n; card.appendChild(h);
   const sl=document.createElement("div"); sl.className="sl";
   sl.innerHTML=`הכי זול ב<b>${rows[0].chain}</b> · נמכר ב-${rows.length} רשתות`;
