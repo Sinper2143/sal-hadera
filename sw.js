@@ -6,7 +6,7 @@
 // אינטרנט, מאשר אפליקציה שנראית תקינה ומציגה שטויות.
 //
 // נכסים שלא משתנים (אייקונים) נשארים מטמון תחילה.
-const VERSION = "sal-hadera-69dd14b5abc9";
+const VERSION = "sal-hadera-7e22c14a8552";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
                "./icon-192.png", "./icon-512.png"];
 
