@@ -460,6 +460,7 @@ MODES.forEach(([b,p])=>{
 
 /* סוגי המוצרים שמשק בית קונה, מסודרים לפי מדף. כל מילה כאן היא חיפוש,
    ולא קטגוריה סגורה: הלחיצה ממלאת את תיבת החיפוש ופותחת את כל ההתאמות. */
+const FRESH_ONLY=new Set(["ירקות","פירות"]);
 const GROUPS=[
  ["מוצרי חלב","milk", ["חלב","קוטג","גבינה","גבינת","יוגורט","שמנת","חמאה","מעדן","לבן","אשל","מוצרלה","צהובה","בולגרית","פטה","ריקוטה","שוקו"]],
  ["בשר, עוף והודו","meat", ["עוף","חזה עוף","שניצל","כרעיים","כנפיים","פרגית","בשר טחון","אנטריקוט","סטייק","המבורגר","קבב","נקניק","נקניקיות","הודו","כבד","שווארמה","אסאדו"]],
@@ -492,7 +493,8 @@ function buildQuick(){
         const b=document.createElement("button"); b.type="button"; b.textContent=w;
         b.addEventListener("click",()=>{
           if(!DATA){ toast("המחירים עוד נטענים, רגע אחד"); return; }
-          document.getElementById(input).value=w; fn(w);
+          document.getElementById(input).value=w;
+          fn(w, host==="quickB" ? FRESH_ONLY.has(title) : undefined);
           if(host==="quickB"){
             moveSugg(body);              // התוצאות נפתחות כאן, מתחת לכפתור
             [...body.children].forEach(x=>x.classList.toggle("on", x===b));
@@ -534,12 +536,13 @@ const storeName=i=>(i==null?"":(DATA.stores[i]||""));
      2  מילה שמתחילה בה                "חלבון", "חלבי"
      3  רצף אותיות בתוך מילה           הכל השאר
    בתוך אותה רמה נשמר הסדר המקורי, שכבר ממוין לפי נפוצוּת המוצר. */
-function match(term){
+function match(term, freshOnly){
   if(!DATA) return [];
   const t=term.trim();
   if(t.length<2) return [];
   const buckets=[[],[],[],[]];
-  for(const it of DATA.items){
+  const pool = freshOnly ? DATA.items.filter(x=>x.f) : DATA.items;
+  for(const it of pool){
     const words=it.n.split(/[\s,.\-()\/]+/).filter(Boolean);
     let tier=-1;
     if(words[0]===t) tier=0;
@@ -559,7 +562,7 @@ function match(term){
 document.getElementById("qb").addEventListener("input",e=>{
   moveSugg(null);
   document.querySelectorAll("#quickB .cat-body button.on").forEach(x=>x.classList.remove("on"));
-  termB(e.target.value);
+  termB(e.target.value, false);
 });
 /* אזור התוצאות נודד: הוא נפתח בתוך הקטגוריה שנלחצה, וחוזר אל מתחת לתיבת
    החיפוש כשמקלידים ידנית. אלמנט אחד שזז, ולא שני אזורי תוצאות שצריך לסנכרן. */
@@ -571,16 +574,22 @@ function moveSugg(into){
   if(s.parentNode!==target) target.appendChild(s);
 }
 
-function termB(term){
+// כשפותחים "ירקות" או "פירות" מצפים לירק, לא לרוטב או לשימורים.
+// שם הקטגוריה נשמר בלחיצה, ומכאן הסינון.
+let bFresh=false;
+function termB(term, freshOnly){
   if(!DATA) return;
+  if(freshOnly!==undefined) bFresh=freshOnly;
   const host=document.getElementById("sugg"); host.innerHTML="";
   const hint=document.getElementById("hintB");
   const t=(term||"").trim();
   if(t.length<2){ hint.hidden=false; hint.textContent="כל מוצר שתוסיפו ייספר למטה."; return; }
-  const hits=match(t).slice(0,25);
+  const hits=match(t, bFresh).slice(0,25);
   if(!hits.length){
     hint.hidden=false;
-    hint.innerHTML=`לא נמצא מוצר שמתחיל ב"<b>${t}</b>". נסו מילה אחת בלבד.`;
+    hint.innerHTML = bFresh
+      ? `לא נמצא מוצר טרי בשם "<b>${t}</b>". לגרסה משומרת או ברוטב, חפשו למעלה בתיבה.`
+      : `לא נמצא מוצר שמתחיל ב"<b>${t}</b>". נסו מילה אחת בלבד.`;
     return;
   }
   hint.hidden=true;
