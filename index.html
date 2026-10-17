@@ -419,7 +419,7 @@ let tT; function toast(m){
 // מספר המבנה שהקוד הזה יודע לקרוא. אם הנתונים בנויים אחרת, הדף שנטען הוא
 // גרסה ישנה ששרדה בזיכרון הדפדפן, והוא מציג שמות ריקים בלי שום שגיאה.
 // במקרה כזה מנקים הכל וטוענים מחדש, פעם אחת בלבד כדי לא להיתקע בלולאה.
-const SCHEMA = 6;
+const SCHEMA = 7;
 async function hardRefresh(){
   try{
     for(const k of await caches.keys()) await caches.delete(k);
