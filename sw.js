@@ -6,7 +6,7 @@
 // אינטרנט, מאשר אפליקציה שנראית תקינה ומציגה שטויות.
 //
 // נכסים שלא משתנים (אייקונים) נשארים מטמון תחילה.
-const VERSION = "sal-hadera-43d00611a2e8";
+const VERSION = "sal-hadera-f240e225503c";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
                "./icon-192.png", "./icon-512.png"];
 
@@ -51,7 +51,7 @@ self.addEventListener("fetch", e => {
 
   const p = url.pathname;
   const isDoc = req.mode === "navigate" || p.endsWith("/") ||
-                p.endsWith(".html") || p.endsWith("data.json");
+                p.endsWith(".html") || p.endsWith(".json");
 
   if (isDoc) { e.respondWith(networkFirst(req)); return; }
 
