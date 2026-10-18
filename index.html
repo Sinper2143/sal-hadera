@@ -252,12 +252,26 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent); outlin
   <header>
     <div>
       <h1>סל חכם</h1>
-      <div class="sub"><b id="cityNow">—</b> · <b id="nCh">0</b> רשתות · עודכן <b id="gen">—</b><button class="linkbtn" id="changeCity" type="button" hidden>החלף עיר</button></div>
+      <div class="sub"><b id="cityNow">—</b> · <b id="nCh">0</b> רשתות · עודכן <b id="gen">—</b><button class="linkbtn" id="changeCity" type="button" hidden>החלף עיר</button><button class="linkbtn" id="signOut" type="button" hidden>יציאה</button></div>
     </div>
     <button class="themer" id="themer" type="button">מצב תצוגה</button>
   </header>
 
-  <section class="panel" id="cityPanel">
+  <section class="panel" id="gate">
+    <h2>כניסה</h2>
+    <p class="lead">הזינו את קוד הגישה שקיבלתם. הקוד נשמר במכשיר, ולא תצטרכו להקליד אותו שוב.</p>
+    <div class="searchbar">
+      <input id="codeInput" type="text" inputmode="latin" autocapitalize="characters"
+             placeholder="XXXX-XXXX-XXXX" autocomplete="off" maxlength="14"
+             style="letter-spacing:.12em;text-align:center;font-weight:700">
+    </div>
+    <button class="btn primary" id="codeGo" type="button" style="width:100%;margin-top:10px">
+      כניסה
+    </button>
+    <p class="hint" id="codeHint"></p>
+  </section>
+
+  <section class="panel" id="cityPanel" hidden>
     <h2>באיזו עיר אתם קונים?</h2>
     <p class="lead">המחירים משתנים מעיר לעיר, ולכן צריך לבחור פעם אחת. אפשר להחליף בכל רגע.</p>
     <button class="btn primary" id="useLoc" type="button" style="width:100%;margin-bottom:10px">
@@ -444,121 +458,211 @@ function fatal(msg){
   el.innerHTML=msg+'<br><button class="btn" style="margin-top:9px" onclick="location.reload()">נסו שוב</button>';
 }
 
-const LS_CITY="salHadera.city.v1";
-let CITIES=null, CITY=null;
+/* ---------- כניסה ופענוח ----------
+   הנתונים מגיעים מוצפנים. קוד הגישה פותח עותק מוצפן של המפתח הראשי,
+   והמפתח הזה מפענח את קבצי הערים. בלי קוד תקף אין מה לקרוא, ולכן אין
+   כאן מסך שאפשר לדלג עליו. המפתח נשמר במכשיר כדי לא להקליד בכל פתיחה. */
+const LS_KEY = "salHadera.key.v1";
+let MASTER = null;
 
-function saveCity(slug){ try{ localStorage.setItem(LS_CITY,slug); }catch(e){} }
+const enc = new TextEncoder(), dec = new TextDecoder();
+const toHex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+const fromB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const toB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+
+async function codeToId(code){
+  const d = await crypto.subtle.digest("SHA-256", enc.encode("salHadera:" + code));
+  return toHex(d).slice(0, 16);
+}
+
+async function unlock(code){
+  const meta = await fetch("keys.json", {cache:"no-store"}).then(r => {
+    if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  const rec = meta.keys[await codeToId(code)];
+  if(!rec) return null;                       // קוד שאינו קיים או שבוטל
+  const base = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveKey"]);
+  const kek = await crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt:fromB64(rec.s), iterations:meta.it, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  try{
+    const raw = await crypto.subtle.decrypt({name:"AES-GCM", iv:fromB64(rec.n)}, kek, fromB64(rec.w));
+    return await crypto.subtle.importKey("raw", raw, "AES-GCM", true, ["decrypt"]);
+  }catch(e){ return null; }
+}
+
+async function getEnc(url){
+  const buf = await fetch(url, {cache:"no-store"}).then(r => {
+    if(!r.ok) throw new Error("HTTP " + r.status); return r.arrayBuffer(); });
+  const plain = await crypto.subtle.decrypt(
+    {name:"AES-GCM", iv:new Uint8Array(buf, 0, 12)}, MASTER, new Uint8Array(buf, 12));
+  return JSON.parse(dec.decode(plain));
+}
+
+async function saveKey(){
+  try{
+    const raw = await crypto.subtle.exportKey("raw", MASTER);
+    localStorage.setItem(LS_KEY, toB64(raw));
+  }catch(e){}
+}
+async function loadKey(){
+  try{
+    const s = localStorage.getItem(LS_KEY);
+    if(!s) return null;
+    return await crypto.subtle.importKey("raw", fromB64(s), "AES-GCM", true, ["decrypt"]);
+  }catch(e){ return null; }
+}
+
+const LS_CITY = "salHadera.city.v1";
+let CITIES = null, CITY = null;
+function saveCity(slug){ try{ localStorage.setItem(LS_CITY, slug); }catch(e){} }
 function readCity(){ try{ return localStorage.getItem(LS_CITY); }catch(e){ return null; } }
 
-// מרחק בקו אווירי בין שתי נקודות, בקילומטרים. די בקירוב הזה כדי לבחור
-// את העיר הקרובה מתוך שבעים, ואין צורך לשלוח את המיקום לשום שירות.
-function distKm(a,b,c,d){
-  const R=6371, r=Math.PI/180;
-  const dLat=(c-a)*r, dLon=(d-b)*r;
-  const x=Math.sin(dLat/2)**2 + Math.cos(a*r)*Math.cos(c*r)*Math.sin(dLon/2)**2;
-  return 2*R*Math.asin(Math.sqrt(x));
+// מרחק בקו אווירי, בקילומטרים. די בקירוב הזה כדי לבחור עיר מתוך שבעים,
+// והמיקום נשאר במכשיר ולא נשלח לשום שירות.
+function distKm(a, b, c, d){
+  const R = 6371, r = Math.PI / 180;
+  const dLat = (c - a) * r, dLon = (d - b) * r;
+  const x = Math.sin(dLat/2) ** 2 + Math.cos(a*r) * Math.cos(c*r) * Math.sin(dLon/2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
 }
 
 function renderCityList(term){
-  const host=document.getElementById("cityList");
-  host.innerHTML="";
+  const host = document.getElementById("cityList");
+  host.innerHTML = "";
   if(!CITIES) return;
-  const t=(term||"").trim();
-  const list=(t ? CITIES.cities.filter(c=>c.c.includes(t)) : CITIES.cities).slice(0,40);
-  if(!list.length){
-    document.getElementById("cityHint").textContent =
-      `לא נמצאה עיר בשם "${t}". כרגע יש מחירים ב-${CITIES.cities.length} ערים.`;
-    return;
-  }
-  document.getElementById("cityHint").textContent =
-    t ? `${list.length} תוצאות` : `${CITIES.cities.length} ערים זמינות`;
-  list.forEach(c=>{
-    const b=document.createElement("button");
-    b.className="cityrow"; b.type="button";
-    b.innerHTML=`<span></span><small>${c.ch} רשתות</small>`;
-    b.querySelector("span").textContent=c.c;
-    b.addEventListener("click",()=>pickCity(c.s));
+  const t = (term || "").trim();
+  const list = (t ? CITIES.cities.filter(c => c.c.includes(t)) : CITIES.cities).slice(0, 40);
+  const hint = document.getElementById("cityHint");
+  if(!list.length){ hint.textContent = 'לא נמצאה עיר בשם "' + t + '".'; return; }
+  hint.textContent = t ? (list.length + " תוצאות") : (CITIES.cities.length + " ערים זמינות");
+  list.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "cityrow"; b.type = "button";
+    b.innerHTML = '<span></span><small>' + c.ch + ' רשתות</small>';
+    b.querySelector("span").textContent = c.c;
+    b.addEventListener("click", () => pickCity(c.s));
     host.appendChild(b);
   });
 }
 
 async function pickCity(slug){
-  const row=CITIES.cities.find(c=>c.s===slug);
+  const row = CITIES.cities.find(c => c.s === slug);
   if(!row) return;
-  document.getElementById("cityHint").textContent="טוען מחירים…";
+  document.getElementById("cityHint").textContent = "טוען מחירים…";
   try{
-    const d=await fetch(`cities/${slug}.json`,{cache:"no-store"}).then(r=>{
-      if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); });
-    if(d.schema!==SCHEMA){
-      if(!ss.get("salHadera.refreshed")){ ss.set("salHadera.refreshed","1"); return hardRefresh(); }
+    const d = await getEnc("cities/" + slug + ".bin");
+    if(d.schema !== SCHEMA){
+      if(!ss.get("salHadera.refreshed")){ ss.set("salHadera.refreshed", "1"); return hardRefresh(); }
       fatal("הגרסה שנטענה אינה תואמת לנתונים. סגרו את הלשונית ופתחו מחדש."); return;
     }
     ss.del("salHadera.refreshed");
-    DATA=d; CITY=row; saveCity(slug);
-    document.getElementById("cityNow").textContent=d.city;
-    document.getElementById("nCh").textContent=d.chains.length;
-    document.getElementById("gen").textContent=d.generated;
-    document.getElementById("cityPanel").hidden=true;
-    document.getElementById("modes").hidden=false;
-    document.getElementById("paneBasket").hidden=false;
-    document.getElementById("changeCity").hidden=false;
-    document.getElementById("qb").disabled=false;
-    document.getElementById("qf").disabled=false;
-    const l=document.getElementById("loading"); if(l) l.hidden=true;
-    BASKET=load(); calculated=false;
-    renderCollected(); document.getElementById("result").innerHTML="";
-    scrollTo({top:0,behavior:"smooth"});
+    DATA = d; CITY = row; saveCity(slug);
+    document.getElementById("cityNow").textContent = d.city;
+    document.getElementById("nCh").textContent = d.chains.length;
+    document.getElementById("gen").textContent = d.generated;
+    document.getElementById("cityPanel").hidden = true;
+    document.getElementById("modes").hidden = false;
+    document.getElementById("paneBasket").hidden = false;
+    document.getElementById("changeCity").hidden = false;
+    document.getElementById("qb").disabled = false;
+    document.getElementById("qf").disabled = false;
+    const l = document.getElementById("loading"); if(l) l.hidden = true;
+    BASKET = load(); calculated = false;
+    renderCollected(); document.getElementById("result").innerHTML = "";
+    scrollTo({top:0, behavior:"smooth"});
   }catch(err){
-    document.getElementById("cityHint").textContent="לא הצלחתי לטעון את "+row.c+". נסו שוב.";
+    document.getElementById("cityHint").textContent = "לא הצלחתי לטעון את " + row.c + ". נסו שוב.";
   }
 }
 
-document.getElementById("changeCity").addEventListener("click",()=>{
-  document.getElementById("cityPanel").hidden=false;
-  document.getElementById("modes").hidden=true;
-  document.getElementById("paneBasket").hidden=true;
-  document.getElementById("paneFind").hidden=true;
-  document.getElementById("citySearch").value="";
+document.getElementById("changeCity").addEventListener("click", () => {
+  document.getElementById("cityPanel").hidden = false;
+  document.getElementById("modes").hidden = true;
+  document.getElementById("paneBasket").hidden = true;
+  document.getElementById("paneFind").hidden = true;
+  document.getElementById("citySearch").value = "";
   renderCityList("");
-  scrollTo({top:0,behavior:"smooth"});
+  scrollTo({top:0, behavior:"smooth"});
 });
+document.getElementById("citySearch").addEventListener("input", e => renderCityList(e.target.value));
 
-document.getElementById("citySearch").addEventListener("input",e=>renderCityList(e.target.value));
-
-document.getElementById("useLoc").addEventListener("click",()=>{
-  const hint=document.getElementById("cityHint");
-  if(!navigator.geolocation){ hint.textContent="המכשיר הזה לא מאפשר איתור מיקום. בחרו עיר מהרשימה."; return; }
-  hint.textContent="מאתר…";
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const {latitude:la, longitude:lo}=pos.coords;
-    let best=null, bestD=1e9;
-    CITIES.cities.forEach(c=>{
+document.getElementById("useLoc").addEventListener("click", () => {
+  const hint = document.getElementById("cityHint");
+  if(!navigator.geolocation){
+    hint.textContent = "המכשיר הזה לא מאפשר איתור מיקום. בחרו עיר מהרשימה."; return;
+  }
+  hint.textContent = "מאתר…";
+  navigator.geolocation.getCurrentPosition(pos => {
+    const la = pos.coords.latitude, lo = pos.coords.longitude;
+    let best = null, bestD = 1e9;
+    CITIES.cities.forEach(c => {
       if(!c.lat) return;
-      const d=distKm(la,lo,c.lat,c.lon);
-      if(d<bestD){ bestD=d; best=c; }
+      const d = distKm(la, lo, c.lat, c.lon);
+      if(d < bestD){ bestD = d; best = c; }
     });
-    if(!best){ hint.textContent="לא הצלחתי להתאים עיר. בחרו מהרשימה."; return; }
-    hint.textContent=`נמצאת ${best.c}, כ-${bestD.toFixed(0)} ק״מ ממך.`;
+    if(!best){ hint.textContent = "לא הצלחתי להתאים עיר. בחרו מהרשימה."; return; }
+    hint.textContent = "נמצאת " + best.c + ", כ-" + bestD.toFixed(0) + " קילומטר ממך.";
     pickCity(best.s);
-  }, err=>{
-    hint.textContent = err.code===1
+  }, err => {
+    hint.textContent = err.code === 1
       ? "לא ניתנה הרשאת מיקום. בחרו עיר מהרשימה."
       : "לא הצלחתי לאתר מיקום. בחרו עיר מהרשימה.";
   }, {timeout:12000, maximumAge:600000});
 });
 
-fetch("cities.json",{cache:"no-store"}).then(r=>{
-  if(!r.ok) throw new Error("HTTP "+r.status);
-  return r.json();
-}).then(d=>{
-  CITIES=d;
-  const saved=readCity();
-  if(saved && d.cities.some(c=>c.s===saved)){ renderCityList(""); pickCity(saved); }
-  else renderCityList("");
-}).catch(err=>{
-  document.getElementById("cityHint").textContent =
-    "לא הצלחתי לטעון את רשימת הערים ("+err.message+"). בדקו את החיבור.";
+async function afterUnlock(){
+  document.getElementById("gate").hidden = true;
+  document.getElementById("cityPanel").hidden = false;
+  document.getElementById("signOut").hidden = false;
+  try{
+    CITIES = await getEnc("cities.bin");
+  }catch(e){
+    document.getElementById("cityHint").textContent = "לא הצלחתי לטעון את רשימת הערים.";
+    return;
+  }
+  renderCityList("");
+  const saved = readCity();
+  if(saved && CITIES.cities.some(c => c.s === saved)) pickCity(saved);
+}
+
+async function tryCode(){
+  const inp = document.getElementById("codeInput");
+  const hint = document.getElementById("codeHint");
+  const code = inp.value.trim().toUpperCase();
+  if(code.length < 10){ hint.textContent = "הקוד קצר מדי."; return; }
+  hint.textContent = "בודק…";
+  let key = null;
+  try{ key = await unlock(code); }
+  catch(e){ hint.textContent = "לא הצלחתי לבדוק את הקוד. בדקו את החיבור."; return; }
+  if(!key){
+    hint.style.color = "var(--dear)";
+    hint.textContent = "הקוד שגוי או בוטל.";
+    return;
+  }
+  MASTER = key; await saveKey();
+  hint.style.color = ""; hint.textContent = "";
+  afterUnlock();
+}
+
+document.getElementById("codeGo").addEventListener("click", tryCode);
+document.getElementById("codeInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") tryCode();
 });
+document.getElementById("codeInput").addEventListener("input", e => {
+  // עוזר להקליד: אותיות גדולות ומקפים אוטומטיים
+  const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  e.target.value = v.replace(/(.{4})(?=.)/g, "$1-");
+});
+document.getElementById("signOut").addEventListener("click", () => {
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  location.reload();
+});
+
+(async () => {
+  const k = await loadKey();
+  if(k){ MASTER = k; afterUnlock(); }
+  else { document.getElementById("codeInput").focus(); }
+})();
 
 /* mode switch */
 const MODES=[["mBasket","paneBasket"],["mFind","paneFind"]];
