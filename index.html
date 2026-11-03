@@ -401,7 +401,7 @@ const thumb=(it,size)=>{
     // ליחס גובה-רוחב. onerror מחליף באייקון אם קובץ חסר, כך ששום פריט
     // לא נשאר עם ריבוע שבור.
     return `<span class="th" style="--th:${s}px">`+
-           `<img src="img/${it.b}.webp" alt="" loading="lazy" decoding="async" `+
+           `<img src="https://sinper2143.github.io/sal-hadera/img/${it.b}.webp" alt="" loading="lazy" decoding="async" `+
            `onerror="this.parentNode.classList.add('th-ic');this.parentNode.innerHTML=window.__icHTML('${it.i}')">`+
            `</span>`;
   }
@@ -480,6 +480,9 @@ async function unlock(code){
     if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
   const rec = meta.keys[await codeToId(code)];
   if(!rec) return null;                       // קוד שאינו קיים או שבוטל
+  // פג תוקף נבדק כאן לנוחות ההודעה, אבל ההגנה האמיתית היא הסרת הרשומה
+  // מקובץ המפתחות: בלעדיה אין מה לפענח, גם אם מישהו עוקף את הבדיקה הזו.
+  if(rec.e && Date.now()/1000 > rec.e) return "expired";
   const base = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveKey"]);
   const kek = await crypto.subtle.deriveKey(
     {name:"PBKDF2", salt:fromB64(rec.s), iterations:meta.it, hash:"SHA-256"},
@@ -634,6 +637,11 @@ async function tryCode(){
   let key = null;
   try{ key = await unlock(code); }
   catch(e){ hint.textContent = "לא הצלחתי לבדוק את הקוד. בדקו את החיבור."; return; }
+  if(key === "expired"){
+    hint.style.color = "var(--dear)";
+    hint.textContent = "תוקף הקוד פג. בקשו קוד חדש.";
+    return;
+  }
   if(!key){
     hint.style.color = "var(--dear)";
     hint.textContent = "הקוד שגוי או בוטל.";
