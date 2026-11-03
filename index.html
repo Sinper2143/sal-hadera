@@ -401,7 +401,7 @@ const thumb=(it,size)=>{
     // ליחס גובה-רוחב. onerror מחליף באייקון אם קובץ חסר, כך ששום פריט
     // לא נשאר עם ריבוע שבור.
     return `<span class="th" style="--th:${s}px">`+
-           `<img src="https://sinper2143.github.io/sal-hadera/img/${it.b}.webp" alt="" loading="lazy" decoding="async" `+
+           `<img src="https://sinper2143.github.io/sal-hadera/img/${it.b}.webp" alt="" decoding="async" `+
            `onerror="this.parentNode.classList.add('th-ic');this.parentNode.innerHTML=window.__icHTML('${it.i}')">`+
            `</span>`;
   }
